@@ -1,7 +1,7 @@
 // ============================================
 // 🔑 PASTE YOUR KEYS HERE
 // ============================================
-const API_KEY = "AIzaSyDaeZXTZG25hJGzFQznQ0b4AFCFtjk2ycw";
+const API_KEY = "AIzaSyD-AE0Qp7Ba9EgNL-Gh4lpk6CDSWwn_XDA";
 const SEARCH_ENGINE_ID = "3162d13ac253d4fed";
 // ============================================
 
