@@ -1,13 +1,25 @@
 // ============================================
-// 🔑 PASTE YOUR KEYS HERE
+// 🔑 GNEWS API KEY
 // ============================================
-const API_KEY = "AIzaSyD-AE0Qp7Ba9EgNL-Gh4lpk6CDSWwn_XDA";
-const SEARCH_ENGINE_ID = "3162d13ac253d4fed";
+const GNEWS_API_KEY = "713c26ac745896e22b7df976f996c2f7";
 // ============================================
 
+function populateYears() {
+  const yearEl = document.getElementById('year');
+  const currentYear = new Date().getFullYear();
+  for (let y = 2000; y <= currentYear; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    if (y === currentYear) opt.selected = true;
+    yearEl.appendChild(opt);
+  }
+}
+
 function populateDays() {
+  const year = document.getElementById('year').value;
   const month = document.getElementById('month').value;
-  const daysInMonth = new Date(2024, new Date(month + ' 1').getMonth() + 1, 0).getDate();
+  const daysInMonth = new Date(year, new Date(month + ' 1').getMonth() + 1, 0).getDate();
   const dayEl = document.getElementById('day');
   const current = parseInt(dayEl.value) || 1;
   dayEl.innerHTML = '';
@@ -20,39 +32,48 @@ function populateDays() {
   }
 }
 
+document.getElementById('year').addEventListener('change', populateDays);
 document.getElementById('month').addEventListener('change', populateDays);
+populateYears();
 populateDays();
 
 async function search() {
+  const year = document.getElementById('year').value;
   const month = document.getElementById('month').value;
   const day = document.getElementById('day').value;
   const resultEl = document.getElementById('result');
 
   resultEl.innerHTML = '<p>Loading...</p>';
 
-  const query = `Florida Man ${month} ${day}`;
-  const url = `https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}&num=5`;
+  // Convert month name to search-friendly format
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthIndex = monthNames.indexOf(month) + 1;
+  const dateStr = `${year}-${monthIndex.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+  // GNews API - simple search without date filters first
+  const url = `https://gnews.io/api/v4/search?q="florida%20man"&sortby=publishedAt&lang=en&token=${GNEWS_API_KEY}&max=50`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
 
-    if (data.error) {
-      resultEl.innerHTML = `<p>Error: ${data.error.message}</p>`;
+    if (data.errors) {
+      resultEl.innerHTML = `<p>Error: ${data.errors}</p>`;
       return;
     }
 
-    if (!data.items || data.items.length === 0) {
-      resultEl.innerHTML = `<p>No results found for ${month} ${day}.</p>`;
+    if (!data.articles || data.articles.length === 0) {
+      resultEl.innerHTML = `<p>No articles found for "florida man".</p>`;
       return;
     }
 
-    resultEl.innerHTML = data.items.map(item => `
-      <div class="result-item">
-        <a href="${item.link}" target="_blank">${item.title}</a>
-        <p>${item.snippet}</p>
-      </div>
-    `).join('');
+    // Pick a random article
+    const randomIndex = Math.floor(Math.random() * data.articles.length);
+    const article = data.articles[randomIndex];
+    const headline = article.title;
+    const source = article.source.name;
+    const pubDate = new Date(article.publishedAt).toLocaleDateString();
+    resultEl.innerHTML = `<p><strong>Headline:</strong> ${headline}</p><p><small>Source: ${source} | Date: ${pubDate}</small></p>`;
 
   } catch (err) {
     resultEl.innerHTML = `<p>Something went wrong: ${err.message}</p>`;
