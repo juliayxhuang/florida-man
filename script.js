@@ -4,78 +4,136 @@
 const GNEWS_API_KEY = "713c26ac745896e22b7df976f996c2f7";
 // ============================================
 
-function populateYears() {
-  const yearEl = document.getElementById('year');
-  const currentYear = new Date().getFullYear();
-  for (let y = 2000; y <= currentYear; y++) {
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+let selectedYear  = new Date().getFullYear();
+let selectedMonth = new Date().getMonth(); // 0-indexed
+let selectedDay   = new Date().getDate();
+
+// ── Build year dropdown ──
+function buildYearSelect() {
+  const el = document.getElementById('year');
+  const current = new Date().getFullYear();
+  for (let y = 2000; y <= current; y++) {
     const opt = document.createElement('option');
     opt.value = y;
     opt.textContent = y;
-    if (y === currentYear) opt.selected = true;
-    yearEl.appendChild(opt);
+    if (y === current) opt.selected = true;
+    el.appendChild(opt);
+  }
+  el.value = selectedYear;
+  el.addEventListener('change', () => {
+    selectedYear = parseInt(el.value);
+    renderDays();
+  });
+}
+
+// ── Build month strip ──
+function buildMonths() {
+  const el = document.getElementById('cal-months');
+  MONTHS.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'cal-month' + (i === selectedMonth ? ' selected' : '');
+    div.textContent = m;
+    div.addEventListener('click', () => {
+      selectedMonth = i;
+      // clamp day to valid range
+      const max = daysInMonth(selectedYear, selectedMonth);
+      if (selectedDay > max) selectedDay = max;
+      document.querySelectorAll('.cal-month').forEach((el, idx) => {
+        el.classList.toggle('selected', idx === selectedMonth);
+      });
+      renderDays();
+    });
+    el.appendChild(div);
+  });
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+// ── Render day grid ──
+function renderDays() {
+  const el = document.getElementById('cal-days');
+  el.innerHTML = '';
+
+  const firstDow = new Date(selectedYear, selectedMonth, 1).getDay(); // 0=Sun
+  const total = daysInMonth(selectedYear, selectedMonth);
+
+  // empty cells before day 1
+  for (let i = 0; i < firstDow; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-day empty';
+    el.appendChild(blank);
+  }
+
+  for (let d = 1; d <= total; d++) {
+    const div = document.createElement('div');
+    div.className = 'cal-day' + (d === selectedDay ? ' selected' : '');
+    div.textContent = d;
+    div.addEventListener('click', () => {
+      selectedDay = d;
+      document.querySelectorAll('.cal-day:not(.empty)').forEach((el, idx) => {
+        el.classList.toggle('selected', idx + 1 === selectedDay);
+      });
+    });
+    el.appendChild(div);
   }
 }
 
-function populateDays() {
-  const year = document.getElementById('year').value;
-  const month = document.getElementById('month').value;
-  const daysInMonth = new Date(year, new Date(month + ' 1').getMonth() + 1, 0).getDate();
-  const dayEl = document.getElementById('day');
-  const current = parseInt(dayEl.value) || 1;
-  dayEl.innerHTML = '';
-  for (let i = 1; i <= daysInMonth; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = i;
-    if (i === current) opt.selected = true;
-    dayEl.appendChild(opt);
-  }
-}
-
-document.getElementById('year').addEventListener('change', populateDays);
-document.getElementById('month').addEventListener('change', populateDays);
-populateYears();
-populateDays();
-
+// ── Search ──
 async function search() {
-  const year = document.getElementById('year').value;
-  const month = document.getElementById('month').value;
-  const day = document.getElementById('day').value;
-  const resultEl = document.getElementById('result');
+  const headlineEl = document.getElementById('headline-text');
+  const sourceEl   = document.getElementById('headline-source');
 
-  resultEl.innerHTML = '<p>Loading...</p>';
+  headlineEl.classList.add('loading');
+  headlineEl.innerHTML = 'Loading...';
+  sourceEl.style.display = 'none';
 
-  // Convert month name to search-friendly format
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const monthIndex = monthNames.indexOf(month) + 1;
-  const dateStr = `${year}-${monthIndex.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-
-  // GNews API - simple search without date filters first
-  const url = `https://gnews.io/api/v4/search?q="florida%20man"&sortby=publishedAt&lang=en&token=${GNEWS_API_KEY}&max=50`;
+  const url = `https://gnews.io/api/v4/search?q=%22florida+man%22&lang=en&token=${GNEWS_API_KEY}&max=10&sortby=publishedAt`;
 
   try {
-    const res = await fetch(url);
+    const res  = await fetch(url);
     const data = await res.json();
 
+    headlineEl.classList.remove('loading');
+
     if (data.errors) {
-      resultEl.innerHTML = `<p>Error: ${data.errors}</p>`;
+      headlineEl.textContent = `Error: ${data.errors}`;
       return;
     }
 
     if (!data.articles || data.articles.length === 0) {
-      resultEl.innerHTML = `<p>No articles found for "florida man".</p>`;
+      headlineEl.textContent = 'No Florida Man headlines found. Try again.';
       return;
     }
 
-    // Pick a random article
-    const randomIndex = Math.floor(Math.random() * data.articles.length);
-    const article = data.articles[randomIndex];
-    const headline = article.title;
-    const source = article.source.name;
-    const pubDate = new Date(article.publishedAt).toLocaleDateString();
-    resultEl.innerHTML = `<p><strong>Headline:</strong> ${headline}</p><p><small>Source: ${source} | Date: ${pubDate}</small></p>`;
+    // filter to only real Florida Man titles
+    const filtered = data.articles.filter(a =>
+      a.title.toLowerCase().includes('florida man') ||
+      a.title.toLowerCase().includes('florida woman')
+    );
+
+    const pool = filtered.length > 0 ? filtered : data.articles;
+    const article = pool[Math.floor(Math.random() * pool.length)];
+
+    headlineEl.textContent = article.title;
+
+    const pubDate = new Date(article.publishedAt).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+    });
+    sourceEl.innerHTML = `${pubDate} &nbsp;·&nbsp; <a href="${article.url}" target="_blank" rel="noopener">${article.source.name}</a>`;
+    sourceEl.style.display = 'block';
 
   } catch (err) {
-    resultEl.innerHTML = `<p>Something went wrong: ${err.message}</p>`;
+    headlineEl.classList.remove('loading');
+    headlineEl.textContent = `Something went wrong: ${err.message}`;
   }
 }
+
+// ── Init ──
+buildYearSelect();
+buildMonths();
+renderDays();
