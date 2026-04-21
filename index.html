@@ -4,12 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Florida Man Bingo</title>
-  <script>
-    (function(d) {
-      var config = { kitId: 'wob8ezc', scriptTimeout: 3000, async: true },
-      h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
-    })(document);
-  </script>
+  <!-- Note: Typekit/Adobe Fonts removed to avoid noisy console errors when blocked by ad blockers. -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -17,7 +12,7 @@
       --marked-bg: #1a1a1a; --marked-text: #f5f0e8;
       --win: #c8392b; --free-bg: #1a1a1a; --free-text: #f5f0e8;
     }
-    html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: "hoefler-text", Georgia, serif; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; }
     body { display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem 4rem; gap: 1.8rem; }
     header { text-align: center; }
     header h1 { font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
@@ -42,7 +37,7 @@
     #status { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.04em; min-height: 1.2em; text-align: center; }
     #status.win { color: var(--win); font-size: 1.2rem; font-style: italic; }
     .actions { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-    button { font-family: "hoefler-text", Georgia, serif; font-size: 0.85rem; letter-spacing: 0.06em; padding: 0.55rem 1.4rem; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background 0.15s, color 0.15s; }
+    button { font-family: Georgia, "Times New Roman", serif; font-size: 0.85rem; letter-spacing: 0.06em; padding: 0.55rem 1.4rem; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background 0.15s, color 0.15s; }
     button:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
     button:disabled { opacity: 0.35; cursor: not-allowed; }
     #generateBtn { background: var(--ink); color: var(--bg); }
@@ -95,7 +90,18 @@
     const generateBtn=document.getElementById("generateBtn");
     const newCardBtn=document.getElementById("newCardBtn");
 
-    async function fetchHeadlines() {
+    async function fetchBundledHeadlines() {
+      const res = await fetch("./data/headlines.json", { cache: "no-store" });
+      if (!res.ok) return [];
+      const json = await res.json();
+      const items = Array.isArray(json) ? json : (json?.items || []);
+      return items
+        .filter(h => typeof h?.title === "string" && h.title.length > 10)
+        .map(h => ({ title: h.title, url: typeof h.url === "string" ? h.url : "" }));
+    }
+
+    async function fetchRedditHeadlinesDirect() {
+      // Works on localhost / a Node-hosted site; fails on GitHub Pages due to CORS.
       const urls = [
         "https://www.reddit.com/r/FloridaMan/top.json?limit=100&t=all",
         "https://www.reddit.com/r/FloridaMan/hot.json?limit=100",
@@ -104,17 +110,33 @@
       ];
       let all = [];
       for (const url of urls) {
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          const posts = (data?.data?.children||[])
-            .filter(p=>!p.data.stickied&&p.data.title.length>15)
-            .map(p=>({title:p.data.title,url:`https://www.reddit.com${p.data.permalink}`}));
-          all = all.concat(posts);
-        } catch(e) {}
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        const data = await res.json();
+        const posts = (data?.data?.children || [])
+          .filter(p => !p.data.stickied && typeof p.data.title === "string" && p.data.title.length > 15)
+          .map(p => ({ title: p.data.title, url: `https://www.reddit.com${p.data.permalink}` }));
+        all = all.concat(posts);
       }
-      const seen=new Set();
-      return all.filter(h=>{if(seen.has(h.title))return false;seen.add(h.title);return true;});
+      const seen = new Set();
+      return all.filter(h => { if (seen.has(h.title)) return false; seen.add(h.title); return true; });
+    }
+
+    async function fetchHeadlines() {
+      // GitHub Pages blocks cross-origin Reddit JSON (CORS), so prefer same-origin bundled data.
+      const bundled = await fetchBundledHeadlines().catch(() => []);
+      if (bundled.length >= 10) return bundled;
+
+      // If bundled data is missing, attempt direct Reddit fetch (may still fail on some hosts).
+      const host = location.hostname || "";
+      const likelyStaticHost = host.endsWith("github.io") || location.protocol === "file:";
+      if (likelyStaticHost) return bundled;
+
+      try {
+        const live = await fetchRedditHeadlinesDirect();
+        return live.length ? live : bundled;
+      } catch (e) {
+        return bundled;
+      }
     }
 
     function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -190,7 +212,9 @@
 
       headlineText.textContent=`\u201c${pick.title}\u201d`;
       headlineText.className="";
-      headlineMeta.innerHTML=`<a href="${pick.url}" target="_blank" rel="noopener">view post \u2192</a>`;
+      headlineMeta.innerHTML = pick.url
+        ? `<a href="${pick.url}" target="_blank" rel="noopener">view post \u2192</a>`
+        : `<span>offline headline set</span>`;
 
       const titleLower=pick.title.toLowerCase();
       const matches=[];
@@ -220,7 +244,12 @@
       suggested=new Array(25).fill(false);
       renderGrid();
       headlines=await fetchHeadlines();
-      if(headlines.length<10){statusEl.textContent="Couldn't load headlines. Try refreshing.";return;}
+      if(headlines.length<10){
+        statusEl.textContent = location.protocol === "file:"
+          ? "Open this page via a local server (not file://) to load headlines."
+          : "Couldn't load headlines. Try refreshing.";
+        return;
+      }
       statusEl.textContent=""; generateBtn.disabled=false; newCardBtn.disabled=false;
       buildCard();
     })();
