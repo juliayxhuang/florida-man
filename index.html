@@ -3,36 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Florida Man</title>
+  <title>Florida Man Bingo</title>
   <script>
     (function(d) {
-      var config = {
-        kitId: 'wob8ezc',
-        scriptTimeout: 3000,
-        async: true
-      },
+      var config = { kitId: 'wob8ezc', scriptTimeout: 3000, async: true },
       h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
     })(document);
   </script>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f0e8; --ink: #1a1a1a; --muted: #999; --border: #1a1a1a;
+      --marked-bg: #1a1a1a; --marked-text: #f5f0e8;
+      --win: #c8392b; --free-bg: #1a1a1a; --free-text: #f5f0e8;
+    }
+    html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: "hoefler-text", Georgia, serif; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem 4rem; gap: 1.8rem; }
+    header { text-align: center; }
+    header h1 { font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
+    header p { margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .bingo-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 580px; }
+    .bingo-letter { text-align: center; font-size: clamp(1.1rem, 2.5vw, 1.5rem); letter-spacing: 0.1em; padding: 0.2rem 0; }
+    .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 580px; }
+    .cell { border: 1.5px solid var(--border); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; padding: 0.3rem; position: relative; transition: background 0.2s, color 0.2s, transform 0.15s; text-align: center; cursor: default; }
+    .cell-word { font-size: clamp(0.6rem, 1.4vw, 0.82rem); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.2; }
+    .cell.free { background: var(--free-bg); color: var(--free-text); font-size: 1.6rem; }
+    .cell.suggested { cursor: pointer; animation: pulse 1s ease-in-out infinite; background: #fff8e1; border-color: #e6a817; color: #7a4f00; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230,168,23,0.4); } 50% { transform: scale(1.04); box-shadow: 0 0 0 5px rgba(230,168,23,0); } }
+    .cell.marked { background: var(--marked-bg); color: var(--marked-text); cursor: default; animation: none; transform: none; }
+    .cell.win-cell { background: var(--win); color: #fff; border-color: var(--win); animation: none; transform: none; }
+    .headline-area { width: 100%; max-width: 580px; min-height: 90px; border: 1.5px solid var(--border); padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; }
+    .headline-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    #headlineText { font-size: clamp(0.95rem, 2vw, 1.15rem); line-height: 1.4; font-style: italic; }
+    #headlineText.empty { color: var(--muted); font-style: normal; font-size: 0.9rem; }
+    #headlineMeta { font-size: 0.75rem; color: var(--muted); }
+    #headlineMeta a { color: var(--muted); text-decoration: underline; }
+    #matchPrompt { font-size: 0.8rem; color: #7a4f00; letter-spacing: 0.03em; min-height: 1.1em; text-align: center; font-style: italic; }
+    #status { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.04em; min-height: 1.2em; text-align: center; }
+    #status.win { color: var(--win); font-size: 1.2rem; font-style: italic; }
+    .actions { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+    button { font-family: "hoefler-text", Georgia, serif; font-size: 0.85rem; letter-spacing: 0.06em; padding: 0.55rem 1.4rem; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background 0.15s, color 0.15s; }
+    button:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    #generateBtn { background: var(--ink); color: var(--bg); }
+    #generateBtn:hover:not(:disabled) { background: #333; }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Florida Man Bingo</h1>
+    <p>Generate headlines. Mark your matches.</p>
+  </header>
+  <div class="bingo-letters">
+    <div class="bingo-letter">B</div><div class="bingo-letter">I</div><div class="bingo-letter">N</div><div class="bingo-letter">G</div><div class="bingo-letter">O</div>
+  </div>
+  <div class="bingo-grid" id="grid"></div>
+  <div id="matchPrompt"></div>
+  <div class="headline-area">
+    <span class="headline-label">Current Headline</span>
+    <span id="headlineText" class="empty">Hit "Generate" to get your first headline.</span>
+    <span id="headlineMeta"></span>
+  </div>
+  <div id="status"></div>
+  <div class="actions">
+    <button id="generateBtn">Generate Headline</button>
+    <button id="newCardBtn">New Card</button>
+  </div>
+  <script>
+    const ALL_WORDS = [
+      "arrested","police","meth","alligator","Walmart",
+      "naked","gun","car","drugs","beer",
+      "hospital","stolen","fired","attack","charged",
+      "sword","knife","taser","deputies","cocaine",
+      "snake","fight","crash","drunk","escaped",
+      "McDonald's","pizza","bottle","deputy","warrant",
+      "stabbed","shot","caught","officer","jail",
+      "pants","chicken","toilet","hammer","machete"
+    ];
+    const FREE_INDEX = 12;
+    const LINES = [
+      [0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+      [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+      [0,6,12,18,24],[4,8,12,16,20]
+    ];
+    let cardWords=[], marked=[], suggested=[], headlines=[], usedIndices=[], won=false;
+    const gridEl=document.getElementById("grid");
+    const headlineText=document.getElementById("headlineText");
+    const headlineMeta=document.getElementById("headlineMeta");
+    const matchPrompt=document.getElementById("matchPrompt");
+    const statusEl=document.getElementById("status");
+    const generateBtn=document.getElementById("generateBtn");
+    const newCardBtn=document.getElementById("newCardBtn");
 
-  <main>
-    <div class="input-row">
-      <input type="text" id="wordInput" placeholder="Your word..." maxlength="30" autocomplete="off" spellcheck="false">
-    </div>
+    async function fetchHeadlines() {
+      const urls = [
+        "https://www.reddit.com/r/FloridaMan/top.json?limit=100&t=all",
+        "https://www.reddit.com/r/FloridaMan/hot.json?limit=100",
+        "https://www.reddit.com/r/FloridaMan/top.json?limit=100&t=year",
+        "https://www.reddit.com/r/FloridaMan/top.json?limit=100&t=month"
+      ];
+      let all = [];
+      for (const url of urls) {
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          const posts = (data?.data?.children||[])
+            .filter(p=>!p.data.stickied&&p.data.title.length>15)
+            .map(p=>({title:p.data.title,url:`https://www.reddit.com${p.data.permalink}`}));
+          all = all.concat(posts);
+        } catch(e) {}
+      }
+      const seen=new Set();
+      return all.filter(h=>{if(seen.has(h.title))return false;seen.add(h.title);return true;});
+    }
 
-    <div id="resultArea" class="result-area hidden">
-      <p id="headline"></p>
-      <div id="meta" class="meta"></div>
-    </div>
+    function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-    <div id="errorArea" class="error-area hidden">
-      <p id="errorMsg"></p>
-    </div>
-  </main>
+    function buildCard() {
+      const picked = shuffle(ALL_WORDS).slice(0,24);
+      cardWords=[];
+      for(let i=0;i<25;i++) cardWords.push(i===FREE_INDEX?null:picked[i<FREE_INDEX?i:i-1]);
+      marked=new Array(25).fill(false); marked[FREE_INDEX]=true;
+      suggested=new Array(25).fill(false);
+      usedIndices=[]; won=false;
+      headlineText.textContent='Hit \u201cGenerate\u201d to get your first headline.';
+      headlineText.className="empty";
+      headlineMeta.innerHTML=""; matchPrompt.textContent=""; statusEl.textContent=""; statusEl.className="";
+      generateBtn.disabled=false;
+      renderGrid();
+    }
 
-  <script src="script.js"></script>
+    function renderGrid() {
+      gridEl.innerHTML="";
+      cardWords.forEach((word,i)=>{
+        const el=document.createElement("div");
+        if(i===FREE_INDEX){el.className="cell free";el.textContent="🐊";}
+        else {
+          let cls="cell";
+          if(marked[i]) cls+=" marked";
+          else if(suggested[i]) cls+=" suggested";
+          el.className=cls;
+          const span=document.createElement("span");
+          span.className="cell-word";
+          span.textContent=word;
+          el.appendChild(span);
+          if(suggested[i]&&!marked[i]) el.addEventListener("click",()=>markCell(i));
+        }
+        gridEl.appendChild(el);
+      });
+    }
+
+    function markCell(i) {
+      if(marked[i]||won)return;
+      marked[i]=true; suggested[i]=false;
+      renderGrid(); checkWin(); updateMatchPrompt();
+    }
+
+    function checkWin() {
+      for(const line of LINES){
+        if(line.every(i=>marked[i])){
+          won=true;
+          const cells=gridEl.querySelectorAll(".cell");
+          line.forEach(i=>{
+            const w=cardWords[i];
+            cells[i].className="cell win-cell";
+            cells[i].innerHTML=w?`<span class="cell-word">${w}</span>`:"🐊";
+          });
+          statusEl.textContent="BINGO! 🐊"; statusEl.className="win";
+          generateBtn.disabled=true; return;
+        }
+      }
+    }
+
+    function generateHeadline() {
+      if(won||headlines.length===0)return;
+      suggested=new Array(25).fill(false); matchPrompt.textContent="";
+      let pick, attempts=0;
+      do {
+        const idx=Math.floor(Math.random()*headlines.length);
+        if(!usedIndices.includes(idx)||usedIndices.length>=headlines.length){
+          pick=headlines[idx]; usedIndices.push(idx); break;
+        }
+        attempts++;
+      } while(attempts<20);
+      if(!pick) pick=headlines[Math.floor(Math.random()*headlines.length)];
+
+      headlineText.textContent=`\u201c${pick.title}\u201d`;
+      headlineText.className="";
+      headlineMeta.innerHTML=`<a href="${pick.url}" target="_blank" rel="noopener">view post \u2192</a>`;
+
+      const titleLower=pick.title.toLowerCase();
+      const matches=[];
+      cardWords.forEach((word,i)=>{
+        if(!word||marked[i])return;
+        if(titleLower.includes(word.toLowerCase())){suggested[i]=true;matches.push(word);}
+      });
+      renderGrid();
+      if(matches.length>0){
+        const wordList=matches.map(w=>`\u201c${w}\u201d`).join(", ");
+        matchPrompt.textContent=`Match${matches.length>1?"es":""} found: ${wordList} \u2014 click to mark.`;
+      } else {
+        matchPrompt.textContent="No matches this time. Keep going.";
+      }
+    }
+
+    function updateMatchPrompt(){
+      const rem=cardWords.filter((w,i)=>w&&suggested[i]&&!marked[i]);
+      if(rem.length===0) matchPrompt.textContent="";
+    }
+
+    (async()=>{
+      generateBtn.disabled=true; newCardBtn.disabled=true;
+      statusEl.textContent="Loading headlines...";
+      cardWords=new Array(25).fill("..."); cardWords[FREE_INDEX]=null;
+      marked=new Array(25).fill(false); marked[FREE_INDEX]=true;
+      suggested=new Array(25).fill(false);
+      renderGrid();
+      headlines=await fetchHeadlines();
+      if(headlines.length<10){statusEl.textContent="Couldn't load headlines. Try refreshing.";return;}
+      statusEl.textContent=""; generateBtn.disabled=false; newCardBtn.disabled=false;
+      buildCard();
+    })();
+
+    generateBtn.addEventListener("click",generateHeadline);
+    newCardBtn.addEventListener("click",buildCard);
+  </script>
 </body>
 </html>

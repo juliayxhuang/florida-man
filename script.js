@@ -5,7 +5,8 @@ const meta = document.getElementById("meta");
 const errorArea = document.getElementById("errorArea");
 const errorMsg = document.getElementById("errorMsg");
 
-// Search on Enter
+const GUARDIAN_API_KEY = "YOUR_API_KEY_HERE"; // drop your key in here
+
 input.addEventListener("keydown", async (e) => {
   if (e.key === "Enter") {
     const word = input.value.trim();
@@ -17,91 +18,76 @@ input.addEventListener("keydown", async (e) => {
 async function search(word) {
   hide(resultArea);
   hide(errorArea);
+  showLoading(true);
 
   try {
-    // First try: search with the word AND filter titles to contain it
-    let post = await fetchPost(`Florida Man ${word}`, word);
+    // Fetch a big pool of real "florida man" articles
+    const pool = await fetchFloridaManPool();
 
-    // Fallback: no match found, grab any random Florida Man post
-    if (!post) {
-      post = await fetchPost("Florida Man");
-      if (post) {
-        // Prepend a note to the headline
-        post._fallback = true;
-      }
-    }
-
-    if (!post) {
+    if (!pool || pool.length === 0) {
+      showLoading(false);
       showError("Something went wrong. Try again.");
       return;
     }
 
-    const title = post.data.title;
-    const permalink = post.data.permalink;
-    const created = post.data.created_utc;
-    const date = formatDate(created);
-    const redditUrl = `https://www.reddit.com${permalink}`;
-    const articleUrl = post.data.url || null;
-    const publisher = extractPublisher(articleUrl);
+    // Try to find one whose headline contains the user's word
+    const wordLower = word.toLowerCase();
+    const matched = pool.filter(a => {
+      const title = (a.fields?.headline || a.webTitle).toLowerCase();
+      return title.includes(wordLower);
+    });
 
-    headline.textContent = post._fallback
+    const isFallback = matched.length === 0;
+    const article = isFallback
+      ? pool[Math.floor(Math.random() * pool.length)]
+      : matched[Math.floor(Math.random() * matched.length)];
+
+    const title = article.fields?.headline || article.webTitle;
+    const date = formatDate(article.webPublicationDate);
+    const url = article.webUrl;
+
+    headline.textContent = isFallback
       ? `Couldn't find "${word}" — but here's one anyway: ${title}`
       : title;
 
-    let metaParts = [];
-    if (date) metaParts.push(date);
-    if (publisher) metaParts.push(publisher);
+    meta.innerHTML = `${date} · The Guardian · <a href="${url}" target="_blank" rel="noopener">source</a>`;
 
-    if (articleUrl && articleUrl !== redditUrl) {
-      meta.innerHTML = metaParts.join(" · ") + (metaParts.length ? " · " : "") + `<a href="${articleUrl}" target="_blank" rel="noopener">source</a>`;
-    } else {
-      meta.innerHTML = metaParts.join(" · ") + (metaParts.length ? " · " : "") + `<a href="${redditUrl}" target="_blank" rel="noopener">reddit post</a>`;
-    }
-
+    showLoading(false);
     show(resultArea);
 
   } catch (err) {
     console.error(err);
+    showLoading(false);
     showError("Something went wrong. Try again.");
   }
 }
 
-async function fetchPost(query, filterWord = null) {
-  const url = `https://www.reddit.com/r/FloridaMan/search.json?q=${encodeURIComponent(query)}&restrict_sr=1&sort=relevance&limit=100`;
+async function fetchFloridaManPool() {
+  // Randomly offset page so we get variety across searches
+  const page = Math.floor(Math.random() * 5) + 1;
+  const url = `https://content.guardianapis.com/search?q=%22florida+man%22&api-key=${GUARDIAN_API_KEY}&show-fields=headline&page-size=50&order-by=newest&page=${page}`;
+
   const res = await fetch(url);
   const data = await res.json();
-  const posts = data?.data?.children;
 
-  if (!posts || posts.length === 0) return null;
+  if (data.response?.status !== "ok") return null;
 
-  let filtered = posts.filter(p => !p.data.stickied && p.data.title.length > 10);
-
-  // If a specific word is required, filter to only posts whose title contains it
-  if (filterWord) {
-    const wordLower = filterWord.toLowerCase();
-    const wordMatches = filtered.filter(p => p.data.title.toLowerCase().includes(wordLower));
-    if (wordMatches.length > 0) filtered = wordMatches;
-    else return null; // signal no match found
-  }
-
-  if (filtered.length === 0) return null;
-  return filtered[Math.floor(Math.random() * filtered.length)];
+  // Only keep articles whose headline actually contains "florida man" or "florida woman"
+  return (data.response.results || []).filter(a => {
+    const title = (a.fields?.headline || a.webTitle).toLowerCase();
+    return title.includes("florida man") || title.includes("florida woman");
+  });
 }
 
-function formatDate(utc) {
-  if (!utc) return null;
-  const d = new Date(utc * 1000);
+function formatDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-function extractPublisher(url) {
-  if (!url) return null;
-  try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "");
-    return hostname;
-  } catch {
-    return null;
-  }
+function showLoading(on) {
+  input.style.opacity = on ? "0.4" : "1";
+  input.disabled = on;
 }
 
 function showError(msg) {
