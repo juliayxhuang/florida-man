@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Kosugi&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #e9e9e9;
+  font-family: 'Kosugi', sans-serif;
+}
+
+/* LAYOUT */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 80px;
+}
+
+/* INPUT */
+input {
+  width: 300px;
+  max-width: 90%;
+  padding: 12px;
+  border: 1px solid #999;
+  background: transparent;
+  font-family: serif;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* HEADLINE */
+.headline-section {
+  text-align: center;
+  max-width: 800px;
+}
+
+h1 {
+  font-family: serif;
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: normal;
+  margin-bottom: 20px;
+}
+
+/* META */
+#meta {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #777;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* LINK */
+#link {
+  font-size: 12px;
+  color: black;
+  text-decoration: underline;
+}
+
+/* DESKTOP */
+@media (min-width: 768px) {
+  .container {
+    padding: 80px;
+    gap: 120px;
+  }
+
+  h1 {
+    font-size: 56px;
+  }
+}
