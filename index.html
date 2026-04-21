@@ -3,33 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Florida Man Generator</title>
+  <title>Florida Man</title>
+  <script>
+    (function(d) {
+      var config = {
+        kitId: 'wob8ezc',
+        scriptTimeout: 3000,
+        async: true
+      },
+      h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+    })(document);
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <div class="container">
-
-    <!-- INPUT -->
-    <input 
-      type="text" 
-      id="wordInput" 
-      placeholder="Your word..." 
-      maxlength="20"
-    />
-
-    <!-- HEADLINE -->
-    <div class="headline-section">
-      <h1 id="headline">
-        Enter a word to generate a Florida Man headline
-      </h1>
-
-      <p id="meta"></p>
-
-      <a id="link" href="#" target="_blank"></a>
+  <main>
+    <div class="input-row">
+      <input type="text" id="wordInput" placeholder="Your word..." maxlength="30" autocomplete="off" spellcheck="false">
     </div>
 
-  </div>
+    <div id="resultArea" class="result-area hidden">
+      <p id="headline"></p>
+      <div id="meta" class="meta"></div>
+    </div>
+
+    <div id="errorArea" class="error-area hidden">
+      <p id="errorMsg"></p>
+    </div>
+  </main>
 
   <script src="script.js"></script>
 </body>

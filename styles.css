@@ -1,74 +1,103 @@
-@import url('https://fonts.googleapis.com/css2?family=Kosugi&display=swap');
-
-* {
+*, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  background: #e9e9e9;
-  font-family: 'Kosugi', sans-serif;
+  background: #fff;
+  color: #111;
+  font-family: "hoefler-text", serif;
+  font-weight: 400;
+  font-style: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
 }
 
-/* LAYOUT */
-.container {
+main {
+  width: 100%;
+  max-width: 640px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
-  gap: 80px;
+  gap: 3rem;
 }
 
-/* INPUT */
-input {
-  width: 300px;
-  max-width: 90%;
-  padding: 12px;
-  border: 1px solid #999;
+/* Input */
+.input-row {
+  width: 100%;
+}
+
+#wordInput {
+  width: 100%;
+  font-family: "hoefler-text", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1rem;
+  color: #111;
   background: transparent;
-  font-family: serif;
-  font-size: 16px;
+  border: 1.5px solid #111;
+  padding: 0.65rem 1rem;
+  text-align: center;
+  outline: none;
+  letter-spacing: 0.01em;
+}
+
+#wordInput::placeholder {
+  color: #aaa;
+}
+
+/* Headline */
+.result-area {
   text-align: center;
 }
 
-/* HEADLINE */
-.headline-section {
-  text-align: center;
-  max-width: 800px;
+#headline {
+  font-family: "hoefler-text", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 2.2rem;
+  line-height: 1.25;
+  color: #111;
+  letter-spacing: -0.01em;
 }
 
-h1 {
-  font-family: serif;
-  font-size: 36px;
-  line-height: 1.2;
-  font-weight: normal;
-  margin-bottom: 20px;
+.meta {
+  margin-top: 1rem;
+  font-family: "hoefler-text", serif;
+  font-size: 0.85rem;
+  color: #888;
+  letter-spacing: 0.02em;
 }
 
-/* META */
-#meta {
-  font-size: 12px;
-  letter-spacing: 1px;
-  color: #777;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-/* LINK */
-#link {
-  font-size: 12px;
-  color: black;
+.meta a {
+  color: #888;
   text-decoration: underline;
 }
 
-/* DESKTOP */
-@media (min-width: 768px) {
-  .container {
-    padding: 80px;
-    gap: 120px;
-  }
+.meta a:hover {
+  color: #111;
+}
 
-  h1 {
-    font-size: 56px;
-  }
+/* Error */
+.error-area {
+  text-align: center;
+}
+
+#errorMsg {
+  font-family: "hoefler-text", serif;
+  font-size: 1.1rem;
+  color: #aaa;
+}
+
+/* Utility */
+.hidden {
+  display: none;
 }
