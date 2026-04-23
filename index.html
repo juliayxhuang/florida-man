@@ -42,6 +42,30 @@
     button:disabled { opacity: 0.35; cursor: not-allowed; }
     #generateBtn { background: var(--ink); color: var(--bg); }
     #generateBtn:hover:not(:disabled) { background: #333; }
+
+    /* Lobby / Multiplayer */
+    #lobby { width: 100%; max-width: 580px; border: 1.5px solid var(--border); padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    #lobby h2 { font-size: 1.05rem; font-weight: 400; letter-spacing: 0.02em; }
+    .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .row.left { justify-content: flex-start; }
+    label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    input[type="text"], input[type="number"] {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 0.9rem;
+      padding: 0.45rem 0.6rem;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--ink);
+      width: min(100%, 320px);
+    }
+    input[type="number"] { width: 120px; }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .tiny { font-size: 0.75rem; color: var(--muted); }
+    details { border: 1px dashed rgba(0,0,0,0.25); padding: 0.6rem 0.8rem; }
+    details summary { cursor: pointer; user-select: none; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    #hostPanel, #joinPanel { display: none; gap: 0.7rem; flex-direction: column; }
+    #hostPanel.active, #joinPanel.active { display: flex; }
+    #gameUI[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -49,21 +73,90 @@
     <h1>Florida Man Bingo</h1>
     <p>Generate headlines. Mark your matches.</p>
   </header>
-  <div class="bingo-letters">
-    <div class="bingo-letter">B</div><div class="bingo-letter">I</div><div class="bingo-letter">N</div><div class="bingo-letter">G</div><div class="bingo-letter">O</div>
+  <div id="lobby">
+    <h2>Choose a mode</h2>
+    <div class="row left">
+      <div style="display:flex; flex-direction:column; gap:0.35rem; width:100%;">
+        <label for="playerName">Display name</label>
+        <input id="playerName" type="text" value="Player" autocomplete="nickname" />
+      </div>
+    </div>
+    <div class="row" id="modeButtons">
+      <button id="singleBtn">Single Player</button>
+      <button id="hostBtn">Host Multiplayer</button>
+      <button id="joinBtn">Join Multiplayer</button>
+    </div>
+
+    <div id="hostPanel">
+      <div class="muted">Send your Host ID to friends, then click Start when everyone has joined.</div>
+      <div class="row left" style="gap:0.5rem;">
+        <label>Host ID</label>
+        <span id="hostIdDisplay" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">…</span>
+        <button id="copyHostIdBtn" type="button">Copy</button>
+      </div>
+      <div class="row">
+        <button id="startGameBtn" type="button" disabled>Start Game</button>
+      </div>
+    </div>
+
+    <div id="joinPanel">
+      <div class="row left">
+        <div style="display:flex; flex-direction:column; gap:0.35rem; width:100%;">
+          <label for="hostIdInput">Host ID</label>
+          <input id="hostIdInput" type="text" placeholder="paste host id" autocomplete="off" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="connectBtn" type="button">Connect</button>
+      </div>
+    </div>
+
+    <details id="peerSettings">
+      <summary>PeerJS settings (optional)</summary>
+      <div class="tiny" style="margin:0.5rem 0 0.8rem;">
+        Leave blank to use PeerJS defaults. If connections fail (common on public servers), run your own PeerServer and fill these in.
+      </div>
+      <div class="row left" style="justify-content: space-between;">
+        <div style="display:flex; flex-direction:column; gap:0.35rem; flex:1; min-width: 240px;">
+          <label for="peerHost">Host</label>
+          <input id="peerHost" type="text" placeholder="e.g. your-domain.com" autocomplete="off" />
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.35rem;">
+          <label for="peerPort">Port</label>
+          <input id="peerPort" type="number" min="1" max="65535" placeholder="443" />
+        </div>
+      </div>
+      <div class="row left" style="justify-content: space-between;">
+        <div style="display:flex; flex-direction:column; gap:0.35rem; flex:1; min-width: 240px;">
+          <label for="peerPath">Path</label>
+          <input id="peerPath" type="text" placeholder="/peerjs" autocomplete="off" />
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input id="peerSecure" type="checkbox" checked />
+          <label for="peerSecure" style="text-transform:none; letter-spacing:0; font-size:0.85rem; color:var(--ink);">Secure (wss/https)</label>
+        </div>
+      </div>
+    </details>
   </div>
-  <div class="bingo-grid" id="grid"></div>
-  <div id="matchPrompt"></div>
-  <div class="headline-area">
-    <span class="headline-label">Current Headline</span>
-    <span id="headlineText" class="empty">Hit "Generate" to get your first headline.</span>
-    <span id="headlineMeta"></span>
+
+  <div id="gameUI" hidden>
+    <div class="bingo-letters">
+      <div class="bingo-letter">B</div><div class="bingo-letter">I</div><div class="bingo-letter">N</div><div class="bingo-letter">G</div><div class="bingo-letter">O</div>
+    </div>
+    <div class="bingo-grid" id="grid"></div>
+    <div id="matchPrompt"></div>
+    <div class="headline-area">
+      <span class="headline-label">Current Headline</span>
+      <span id="headlineText" class="empty">Hit "Generate" to get your first headline.</span>
+      <span id="headlineMeta"></span>
+    </div>
+    <div id="status"></div>
+    <div class="actions">
+      <button id="generateBtn">Generate Headline</button>
+      <button id="newCardBtn">New Card</button>
+    </div>
   </div>
-  <div id="status"></div>
-  <div class="actions">
-    <button id="generateBtn">Generate Headline</button>
-    <button id="newCardBtn">New Card</button>
-  </div>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script>
     const ALL_WORDS = [
       "arrested","police","meth","alligator","Walmart",
@@ -82,6 +175,20 @@
       [0,6,12,18,24],[4,8,12,16,20]
     ];
     let cardWords=[], marked=[], suggested=[], headlines=[], usedIndices=[], won=false;
+    let mode = "lobby"; // lobby | single | mp-host | mp-join
+    const mp = {
+      enabled: false,
+      isHost: false,
+      peer: null,
+      conns: new Map(), // peerId -> DataConnection (host only)
+      hostConn: null, // join only
+      myId: "",
+      seed: "",
+      started: false,
+      gameOver: false,
+      players: new Map(), // peerId -> { name, marked:boolean[25] }
+      cardNonce: 0
+    };
     const gridEl=document.getElementById("grid");
     const headlineText=document.getElementById("headlineText");
     const headlineMeta=document.getElementById("headlineMeta");
@@ -89,6 +196,23 @@
     const statusEl=document.getElementById("status");
     const generateBtn=document.getElementById("generateBtn");
     const newCardBtn=document.getElementById("newCardBtn");
+    const gameUI=document.getElementById("gameUI");
+    const lobbyEl=document.getElementById("lobby");
+    const playerNameInput=document.getElementById("playerName");
+    const singleBtn=document.getElementById("singleBtn");
+    const hostBtn=document.getElementById("hostBtn");
+    const joinBtn=document.getElementById("joinBtn");
+    const hostPanel=document.getElementById("hostPanel");
+    const joinPanel=document.getElementById("joinPanel");
+    const hostIdDisplay=document.getElementById("hostIdDisplay");
+    const copyHostIdBtn=document.getElementById("copyHostIdBtn");
+    const startGameBtn=document.getElementById("startGameBtn");
+    const hostIdInput=document.getElementById("hostIdInput");
+    const connectBtn=document.getElementById("connectBtn");
+    const peerHostInput=document.getElementById("peerHost");
+    const peerPortInput=document.getElementById("peerPort");
+    const peerPathInput=document.getElementById("peerPath");
+    const peerSecureInput=document.getElementById("peerSecure");
 
     async function fetchBundledHeadlines() {
       const res = await fetch("./data/headlines.json", { cache: "no-store" });
@@ -140,9 +264,15 @@
     }
 
     function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return (h^=h>>>16)>>>0;};}
+    function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+    function rngFromSeed(seed){return mulberry32(xmur3(seed)());}
+    function shuffleWithRng(arr, rng){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return [...b].map(x=>x.toString(16).padStart(2,"0")).join("");}
+    function computeWinLine(markedArr){for(const line of LINES){if(line.every(i=>markedArr[i])) return line;}return null;}
 
-    function buildCard() {
-      const picked = shuffle(ALL_WORDS).slice(0,24);
+    function buildCard(seed, { preserveStatus = false } = {}) {
+      const picked = seed ? shuffleWithRng(ALL_WORDS, rngFromSeed(seed)).slice(0,24) : shuffle(ALL_WORDS).slice(0,24);
       cardWords=[];
       for(let i=0;i<25;i++) cardWords.push(i===FREE_INDEX?null:picked[i<FREE_INDEX?i:i-1]);
       marked=new Array(25).fill(false); marked[FREE_INDEX]=true;
@@ -150,8 +280,13 @@
       usedIndices=[]; won=false;
       headlineText.textContent='Hit \u201cGenerate\u201d to get your first headline.';
       headlineText.className="empty";
-      headlineMeta.innerHTML=""; matchPrompt.textContent=""; statusEl.textContent=""; statusEl.className="";
-      generateBtn.disabled=false;
+      headlineMeta.innerHTML=""; matchPrompt.textContent="";
+      if(!preserveStatus){ statusEl.textContent=""; statusEl.className=""; }
+      if(mode === "single"){
+        generateBtn.disabled = false;
+      } else if(mp.enabled){
+        generateBtn.disabled = !mp.started || mp.gameOver;
+      }
       renderGrid();
     }
 
@@ -177,8 +312,18 @@
 
     function markCell(i) {
       if(marked[i]||won)return;
+      if(mp.enabled && (mp.gameOver || !mp.started)) return;
       marked[i]=true; suggested[i]=false;
-      renderGrid(); checkWin(); updateMatchPrompt();
+      renderGrid();
+      if(!mp.enabled) checkWin();
+      updateMatchPrompt();
+      if(mp.enabled){
+        if(mp.isHost){
+          hostApplyMark(mp.myId, i);
+        } else if(mp.hostConn && mp.hostConn.open){
+          mp.hostConn.send({ type: "mark", i });
+        }
+      }
     }
 
     function checkWin() {
@@ -197,19 +342,8 @@
       }
     }
 
-    function generateHeadline() {
-      if(won||headlines.length===0)return;
+    function showHeadline(pick){
       suggested=new Array(25).fill(false); matchPrompt.textContent="";
-      let pick, attempts=0;
-      do {
-        const idx=Math.floor(Math.random()*headlines.length);
-        if(!usedIndices.includes(idx)||usedIndices.length>=headlines.length){
-          pick=headlines[idx]; usedIndices.push(idx); break;
-        }
-        attempts++;
-      } while(attempts<20);
-      if(!pick) pick=headlines[Math.floor(Math.random()*headlines.length)];
-
       headlineText.textContent=`\u201c${pick.title}\u201d`;
       headlineText.className="";
       headlineMeta.innerHTML = pick.url
@@ -231,18 +365,130 @@
       }
     }
 
+    function generateHeadlineSingle() {
+      if(won||headlines.length===0)return;
+      let pick, attempts=0;
+      do {
+        const idx=Math.floor(Math.random()*headlines.length);
+        if(!usedIndices.includes(idx)||usedIndices.length>=headlines.length){
+          pick=headlines[idx]; usedIndices.push(idx); break;
+        }
+        attempts++;
+      } while(attempts<20);
+      if(!pick) pick=headlines[Math.floor(Math.random()*headlines.length)];
+      showHeadline(pick);
+    }
+
+    function hostPickNextHeadline(){
+      if(mp.gameOver || !mp.started || headlines.length===0) return null;
+      let pick, attempts=0;
+      do {
+        const idx=Math.floor(Math.random()*headlines.length);
+        if(!usedIndices.includes(idx)||usedIndices.length>=headlines.length){
+          pick=headlines[idx]; usedIndices.push(idx); break;
+        }
+        attempts++;
+      } while(attempts<20);
+      if(!pick) pick=headlines[Math.floor(Math.random()*headlines.length)];
+      return pick;
+    }
+
+    function hostBroadcast(msg){
+      for(const conn of mp.conns.values()){
+        if(conn && conn.open) conn.send(msg);
+      }
+    }
+
+    function hostApplyMark(peerId, i){
+      const p = mp.players.get(peerId);
+      if(!p || mp.gameOver) return;
+      p.marked[i] = true;
+      const line = computeWinLine(p.marked);
+      if(line){
+        mp.gameOver = true;
+        const winnerName = p.name || "Player";
+        const payload = { type: "gameOver", winnerId: peerId, winnerName, line };
+        hostBroadcast(payload);
+        applyGameOver(payload);
+      }
+    }
+
+    function applyStart(){
+      mp.started = true;
+      statusEl.textContent = "Multiplayer started. Generate a headline!";
+      newCardBtn.disabled = true;
+      generateBtn.disabled = false;
+    }
+
+    function applyGameOver(payload){
+      mp.gameOver = true;
+      const isMe = payload.winnerId === mp.myId;
+      won = true;
+      statusEl.textContent = isMe ? "You got BINGO! 🐊" : `${payload.winnerName} got BINGO! 🐊`;
+      statusEl.className = "win";
+      generateBtn.disabled = true;
+      if(isMe && Array.isArray(payload.line)){
+        const cells = gridEl.querySelectorAll(".cell");
+        payload.line.forEach(idx => {
+          const w = cardWords[idx];
+          if(cells[idx]){
+            cells[idx].className = "cell win-cell";
+            cells[idx].innerHTML = w ? `<span class="cell-word">${w}</span>` : "🐊";
+          }
+        });
+      }
+    }
+
     function updateMatchPrompt(){
       const rem=cardWords.filter((w,i)=>w&&suggested[i]&&!marked[i]);
       if(rem.length===0) matchPrompt.textContent="";
     }
 
-    (async()=>{
+    function getPeerOptions(){
+      const host = (peerHostInput.value || "").trim();
+      const portStr = (peerPortInput.value || "").toString().trim();
+      const path = (peerPathInput.value || "").trim();
+      const secure = !!peerSecureInput.checked;
+      const opts = { debug: 1 };
+      if(host) opts.host = host;
+      if(portStr) opts.port = Number(portStr);
+      if(path) opts.path = path;
+      if(host || portStr || path) opts.secure = secure;
+      return opts;
+    }
+
+    function resetGameUI(){
+      headlineText.textContent='Hit \u201cGenerate\u201d to get your first headline.';
+      headlineText.className="empty";
+      headlineMeta.innerHTML="";
+      matchPrompt.textContent="";
+      statusEl.textContent="";
+      statusEl.className="";
+      usedIndices=[];
+      won=false;
+      suggested=new Array(25).fill(false);
+      marked=new Array(25).fill(false); marked[FREE_INDEX]=true;
+      cardWords=new Array(25).fill("..."); cardWords[FREE_INDEX]=null;
+      renderGrid();
+      generateBtn.disabled = true;
+      newCardBtn.disabled = true;
+    }
+
+    function enterMode(nextMode){
+      mode = nextMode;
+      mp.enabled = nextMode === "mp-host" || nextMode === "mp-join";
+      lobbyEl.hidden = nextMode === "single";
+      document.getElementById("modeButtons").hidden = mp.enabled;
+      gameUI.hidden = false;
+      hostPanel.classList.remove("active");
+      joinPanel.classList.remove("active");
+    }
+
+    async function initSingle(){
+      enterMode("single");
+      resetGameUI();
       generateBtn.disabled=true; newCardBtn.disabled=true;
       statusEl.textContent="Loading headlines...";
-      cardWords=new Array(25).fill("..."); cardWords[FREE_INDEX]=null;
-      marked=new Array(25).fill(false); marked[FREE_INDEX]=true;
-      suggested=new Array(25).fill(false);
-      renderGrid();
       headlines=await fetchHeadlines();
       if(headlines.length<10){
         statusEl.textContent = location.protocol === "file:"
@@ -250,12 +496,247 @@
           : "Couldn't load headlines. Try refreshing.";
         return;
       }
-      statusEl.textContent=""; generateBtn.disabled=false; newCardBtn.disabled=false;
-      buildCard();
-    })();
+      statusEl.textContent="";
+      generateBtn.disabled=false; newCardBtn.disabled=false;
+      buildCard(undefined, { preserveStatus: false });
+    }
 
-    generateBtn.addEventListener("click",generateHeadline);
-    newCardBtn.addEventListener("click",buildCard);
+    function teardownPeer(){
+      try{
+        if(mp.hostConn){ mp.hostConn.close(); mp.hostConn = null; }
+        for(const c of mp.conns.values()) try{ c.close(); } catch(_){}
+        mp.conns.clear();
+        if(mp.peer){ mp.peer.destroy(); mp.peer = null; }
+      }catch(_){}
+    }
+
+    async function initHost(){
+      if(location.protocol === "file:"){
+        gameUI.hidden = false;
+        resetGameUI();
+        statusEl.textContent = "Multiplayer requires serving this page over http(s). Try `python3 -m http.server`.";
+        return;
+      }
+      if(typeof window.Peer !== "function"){
+        gameUI.hidden = false;
+        resetGameUI();
+        statusEl.textContent = "PeerJS failed to load. Check your connection and refresh.";
+        return;
+      }
+      teardownPeer();
+      enterMode("mp-host");
+      resetGameUI();
+      mp.isHost = true;
+      mp.started = false;
+      mp.gameOver = false;
+      mp.players.clear();
+      mp.seed = randomHex(12);
+      mp.cardNonce = 0;
+      hostPanel.classList.add("active");
+      startGameBtn.disabled = true;
+      hostIdDisplay.textContent = "…";
+      statusEl.textContent = "Creating host…";
+      generateBtn.disabled = true;
+      newCardBtn.disabled = false;
+
+      // Host loads headlines once; clients receive headlines via broadcast.
+      headlines = await fetchHeadlines();
+      if(headlines.length < 10){
+        statusEl.textContent = "Couldn't load headlines for host. Try refreshing.";
+        return;
+      }
+
+      const peer = new Peer(undefined, getPeerOptions());
+      mp.peer = peer;
+      peer.on("open", (id) => {
+        mp.myId = id;
+        hostIdDisplay.textContent = id;
+        statusEl.textContent = "Host ready. Waiting for players to join…";
+        mp.players.set(id, { name: (playerNameInput.value || "Host").trim() || "Host", marked: new Array(25).fill(false) });
+        mp.players.get(id).marked[FREE_INDEX] = true;
+        buildCard(`${mp.seed}|${mp.myId}|${mp.cardNonce}`, { preserveStatus: true });
+        startGameBtn.disabled = false;
+      });
+      peer.on("connection", (conn) => {
+        mp.conns.set(conn.peer, conn);
+        conn.on("data", (data) => {
+          if(!data || typeof data !== "object") return;
+          if(data.type === "hello"){
+            const name = (data.name || "Player").toString().trim().slice(0, 40) || "Player";
+            mp.players.set(conn.peer, { name, marked: new Array(25).fill(false) });
+            mp.players.get(conn.peer).marked[FREE_INDEX] = true;
+            conn.send({ type: "welcome", seed: mp.seed, started: mp.started, gameOver: mp.gameOver, hostName: mp.players.get(mp.myId)?.name || "Host" });
+            statusEl.textContent = `Player joined: ${name}`;
+            return;
+          }
+          if(data.type === "requestHeadline"){
+            const pick = hostPickNextHeadline();
+            if(pick){
+              const payload = { type: "headline", headline: pick };
+              hostBroadcast(payload);
+              showHeadline(pick);
+            }
+            return;
+          }
+          if(data.type === "mark" && Number.isInteger(data.i)){
+            hostApplyMark(conn.peer, data.i);
+            return;
+          }
+        });
+        conn.on("close", () => {
+          const name = mp.players.get(conn.peer)?.name || conn.peer;
+          mp.players.delete(conn.peer);
+          mp.conns.delete(conn.peer);
+          statusEl.textContent = `Player left: ${name}`;
+        });
+      });
+      peer.on("error", (err) => {
+        statusEl.textContent = `PeerJS error: ${err?.type || err?.message || "unknown"}`;
+      });
+    }
+
+    async function initJoin(hostId){
+      if(location.protocol === "file:"){
+        gameUI.hidden = false;
+        resetGameUI();
+        statusEl.textContent = "Multiplayer requires serving this page over http(s). Try `python3 -m http.server`.";
+        return;
+      }
+      if(typeof window.Peer !== "function"){
+        gameUI.hidden = false;
+        resetGameUI();
+        statusEl.textContent = "PeerJS failed to load. Check your connection and refresh.";
+        return;
+      }
+      const cleanHostId = (hostId || "").trim();
+      if(!cleanHostId){
+        statusEl.textContent = "Paste a Host ID to connect.";
+        return;
+      }
+      teardownPeer();
+      enterMode("mp-join");
+      resetGameUI();
+      mp.isHost = false;
+      mp.started = false;
+      mp.gameOver = false;
+      mp.players.clear();
+      mp.seed = "";
+      mp.cardNonce = 0;
+      joinPanel.classList.add("active");
+      statusEl.textContent = "Connecting to host…";
+      generateBtn.disabled = true;
+      newCardBtn.disabled = false;
+
+      const peer = new Peer(undefined, getPeerOptions());
+      mp.peer = peer;
+      peer.on("open", (id) => {
+        mp.myId = id;
+        const conn = peer.connect(cleanHostId, { reliable: true });
+        mp.hostConn = conn;
+        conn.on("open", () => {
+          const name = (playerNameInput.value || "Player").trim().slice(0, 40) || "Player";
+          conn.send({ type: "hello", name });
+        });
+        conn.on("data", (data) => {
+          if(!data || typeof data !== "object") return;
+          if(data.type === "welcome"){
+            mp.seed = (data.seed || "").toString();
+            const seed = `${mp.seed}|${mp.myId}|${mp.cardNonce}`;
+            buildCard(seed, { preserveStatus: true });
+            statusEl.textContent = data.started ? "Connected. Multiplayer in progress." : "Connected. Waiting for host to start…";
+            mp.started = !!data.started;
+            mp.gameOver = !!data.gameOver;
+            newCardBtn.disabled = mp.started;
+            generateBtn.disabled = !mp.started;
+            return;
+          }
+          if(data.type === "start"){
+            applyStart();
+            return;
+          }
+          if(data.type === "headline" && data.headline){
+            showHeadline(data.headline);
+            return;
+          }
+          if(data.type === "gameOver"){
+            applyGameOver(data);
+            return;
+          }
+        });
+        conn.on("close", () => {
+          statusEl.textContent = "Disconnected from host.";
+          generateBtn.disabled = true;
+        });
+        conn.on("error", () => {
+          statusEl.textContent = "Connection error. Check Host ID and PeerJS settings.";
+        });
+      });
+      peer.on("error", (err) => {
+        statusEl.textContent = `PeerJS error: ${err?.type || err?.message || "unknown"}`;
+      });
+    }
+
+    function requestHeadlineMp(){
+      if(mp.gameOver || !mp.started) return;
+      if(mp.isHost){
+        const pick = hostPickNextHeadline();
+        if(pick){
+          const payload = { type: "headline", headline: pick };
+          hostBroadcast(payload);
+          showHeadline(pick);
+        }
+      } else if(mp.hostConn && mp.hostConn.open){
+        mp.hostConn.send({ type: "requestHeadline" });
+      }
+    }
+
+    singleBtn.addEventListener("click", () => {
+      initSingle();
+    });
+    hostBtn.addEventListener("click", () => { initHost(); });
+    joinBtn.addEventListener("click", () => { joinPanel.classList.toggle("active"); });
+    connectBtn.addEventListener("click", () => { initJoin(hostIdInput.value); });
+    startGameBtn.addEventListener("click", () => {
+      if(!mp.isHost || mp.started || mp.gameOver) return;
+      applyStart();
+      hostBroadcast({ type: "start" });
+    });
+    copyHostIdBtn.addEventListener("click", async () => {
+      const id = (hostIdDisplay.textContent || "").trim();
+      if(!id || id === "…") return;
+      try{
+        await navigator.clipboard.writeText(id);
+        statusEl.textContent = "Host ID copied.";
+      }catch(_){
+        statusEl.textContent = "Couldn't copy. Select and copy the Host ID manually.";
+      }
+    });
+
+    generateBtn.addEventListener("click", () => {
+      if(mode === "single") generateHeadlineSingle();
+      else if(mp.enabled) requestHeadlineMp();
+    });
+
+    newCardBtn.addEventListener("click", () => {
+      if(mode === "single"){
+        buildCard(undefined, { preserveStatus: false });
+        return;
+      }
+      if(mp.enabled){
+        if(mp.started){
+          statusEl.textContent = "New cards are disabled once multiplayer starts.";
+          return;
+        }
+        mp.cardNonce++;
+        const seed = `${mp.seed || "pending"}|${mp.myId || "me"}|${mp.cardNonce}`;
+        buildCard(seed, { preserveStatus: true });
+        statusEl.textContent = "New card generated.";
+      }
+    });
+
+    // Initial lobby state
+    gameUI.hidden = true;
+    resetGameUI();
   </script>
 </body>
 </html>
