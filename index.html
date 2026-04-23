@@ -11,48 +11,76 @@
       --bg: #f5f0e8; --ink: #1a1a1a; --muted: #999; --border: #1a1a1a;
       --marked-bg: #1a1a1a; --marked-text: #f5f0e8;
       --win: #c8392b; --free-bg: #1a1a1a; --free-text: #f5f0e8;
+      /* JS will shrink this until the buttons fit the viewport (no scroll). */
+      --gridSize: 520px;
     }
-    html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; }
-    body { display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem 4rem; gap: 1.8rem; }
-    header { text-align: center; }
-    header h1 { font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
-    header p { margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
-    .bingo-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 580px; }
+    html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; overflow-y: hidden; }
+    body { display: flex; flex-direction: column; align-items: stretch; padding: 0; margin: 0; }
+    header { width: 100%; text-align: center; }
+    header h1 { font-size: clamp(1.7rem, 5vw, 2.8rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
+    header p { margin-top: 0.35rem; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .bingo-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: min(100%, var(--gridSize)); max-width: 560px; margin-left: auto; margin-right: auto; }
     .bingo-letter { text-align: center; font-size: clamp(1.1rem, 2.5vw, 1.5rem); letter-spacing: 0.1em; padding: 0.2rem 0; }
-    .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 580px; }
-    .cell { border: 1.5px solid var(--border); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; padding: 0.3rem; position: relative; transition: background 0.2s, color 0.2s, transform 0.15s; text-align: center; cursor: default; }
-    .cell-word { font-size: clamp(0.6rem, 1.4vw, 0.82rem); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.2; }
+    .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: min(100%, var(--gridSize)); max-width: 560px; margin-left: auto; margin-right: auto; }
+    .cell { border: 1.5px solid var(--border); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; padding: 0.25rem; position: relative; transition: background 0.2s, color 0.2s, transform 0.15s; text-align: center; cursor: default; }
+    .cell-word { font-size: clamp(0.58rem, 1.25vw, 0.78rem); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.15; }
     .cell.free { background: var(--free-bg); color: var(--free-text); font-size: 1.6rem; }
     .cell.suggested { cursor: pointer; animation: pulse 1s ease-in-out infinite; background: #fff8e1; border-color: #e6a817; color: #7a4f00; }
     @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230,168,23,0.4); } 50% { transform: scale(1.04); box-shadow: 0 0 0 5px rgba(230,168,23,0); } }
     .cell.marked { background: var(--marked-bg); color: var(--marked-text); cursor: default; animation: none; transform: none; }
     .cell.win-cell { background: var(--win); color: #fff; border-color: var(--win); animation: none; transform: none; }
-    .headline-area { width: 100%; max-width: 580px; min-height: 90px; border: 1.5px solid var(--border); padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; }
+    .headline-area { width: min(100%, var(--gridSize)); max-width: 560px; min-height: 64px; border: 1.5px solid var(--border); padding: 0.65rem 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; justify-content: center; margin-left: auto; margin-right: auto; }
     .headline-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-    #headlineText { font-size: clamp(0.95rem, 2vw, 1.15rem); line-height: 1.4; font-style: italic; }
+    #headlineText { font-size: clamp(0.9rem, 1.9vw, 1.08rem); line-height: 1.35; font-style: italic; }
     #headlineText.empty { color: var(--muted); font-style: normal; font-size: 0.9rem; }
+    /* Prevent layout shift when the headline is long */
+    #headlineText:not(.empty) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     #headlineMeta { font-size: 0.75rem; color: var(--muted); }
     #headlineMeta a { color: var(--muted); text-decoration: underline; }
-    #matchPrompt { font-size: 0.8rem; color: #7a4f00; letter-spacing: 0.03em; min-height: 1.1em; text-align: center; font-style: italic; }
-    #status { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.04em; min-height: 1.2em; text-align: center; }
+    #matchPrompt { font-size: 0.78rem; color: #7a4f00; letter-spacing: 0.03em; min-height: 1.05em; text-align: center; font-style: italic; }
+    #status { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.04em; min-height: 1.1em; text-align: center; }
     #status.win { color: var(--win); font-size: 1.2rem; font-style: italic; }
-    .actions { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-    button { font-family: Georgia, "Times New Roman", serif; font-size: 0.85rem; letter-spacing: 0.06em; padding: 0.55rem 1.4rem; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .actions { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: center; }
+    button { font-family: Georgia, "Times New Roman", serif; font-size: 0.82rem; letter-spacing: 0.06em; padding: 0.48rem 1.15rem; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; transition: background 0.15s, color 0.15s; }
     button:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
     button:disabled { opacity: 0.35; cursor: not-allowed; }
     #generateBtn { background: var(--ink); color: var(--bg); }
     #generateBtn:hover:not(:disabled) { background: #333; }
 
     /* Lobby / Multiplayer */
-    #lobby { width: 100%; max-width: 580px; border: 1.5px solid var(--border); padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
-    #lobby h2 { font-size: 1.05rem; font-weight: 400; letter-spacing: 0.02em; }
+    .layout {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      justify-content: center; /* keep the game column centered in the viewport */
+      align-items: flex-start;
+      margin: 0 auto;
+      padding: 1rem 0.75rem 1rem;
+      height: 100vh;
+    }
+    .centerCol { width: min(100%, 580px); display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+    #gameUI { width: min(100%, var(--gridSize)); max-width: 580px; display: flex; flex-direction: column; align-items: center; gap: 0.55rem; }
+    #lobby {
+      position: fixed;
+      left: 0.75rem;
+      top: 1rem;
+      border: 1.5px solid var(--border);
+      padding: 0.65rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      width: min(100%, 280px);
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+    }
+    #lobby h2 { font-size: 0.95rem; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
     .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; justify-content: center; }
     .row.left { justify-content: flex-start; }
     label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
     input[type="text"], input[type="number"] {
       font-family: Georgia, "Times New Roman", serif;
       font-size: 0.9rem;
-      padding: 0.45rem 0.6rem;
+      padding: 0.4rem 0.55rem;
       border: 1.5px solid var(--border);
       background: transparent;
       color: var(--ink);
@@ -65,95 +93,144 @@
     details summary { cursor: pointer; user-select: none; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
     #hostPanel, #joinPanel { display: none; gap: 0.7rem; flex-direction: column; }
     #hostPanel.active, #joinPanel.active { display: flex; }
-    #gameUI[hidden] { display: none; }
+    @media (max-width: 940px){
+      .layout { flex-direction: column; align-items: center; gap: 0.9rem; }
+      #lobby { position: static; width: min(100%, 580px); max-height: none; overflow: visible; }
+    }
+    @media (max-height: 820px){
+      body { padding: 1.1rem 0.8rem 1.2rem; gap: 0.8rem; }
+      .bingo-grid { gap: 4px; max-width: 520px; }
+      .bingo-letters { gap: 4px; max-width: 520px; }
+      .headline-area { max-width: 520px; min-height: 64px; padding: 0.65rem 0.9rem; }
+      button { padding: 0.42rem 1.05rem; }
+    }
+
+    /* Modal */
+    #modalOverlay[hidden] { display: none; }
+    #modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; padding: 1.2rem; z-index: 999; }
+    #modal { width: min(540px, 100%); background: var(--bg); border: 1.5px solid var(--border); padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    #modal h3 { font-size: 1.3rem; font-weight: 400; letter-spacing: -0.01em; }
+    #modalBody { color: var(--muted); line-height: 1.35; }
+    #modalActions { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: flex-end; }
+    #primaryModalBtn { background: var(--ink); color: var(--bg); }
+    #primaryModalBtn:hover:not(:disabled) { background: #333; }
+
+    /* Smaller buttons inside lobby */
+    #lobby button { font-size: 0.78rem; padding: 0.45rem 0.9rem; }
+    #lobby .muted { font-size: 0.8rem; }
+
+    /* Make sure core controls stay visible on short screens */
+    @media (max-height: 740px){
+      header h1 { font-size: clamp(1.5rem, 4.6vw, 2.4rem); }
+      header p { font-size: 0.7rem; }
+      .headline-area { min-height: 58px; padding: 0.55rem 0.8rem; }
+      #headlineMeta { display: none; }
+      .actions { gap: 0.55rem; }
+      button { font-size: 0.78rem; padding: 0.38rem 0.95rem; }
+      .bingo-grid { gap: 3px; max-width: 480px; }
+      .bingo-letters { gap: 3px; max-width: 480px; }
+      .cell { padding: 0.18rem; }
+      .cell-word { font-size: 0.62rem; }
+    }
+
+    /* Fixed action buttons */
+    :root { --actionBarReserve: 72px; }
+    #actionBar {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0.8rem;
+      width: min(560px, calc(100vw - 1.5rem));
+      display: flex;
+      justify-content: center;
+      z-index: 50;
+      pointer-events: none;
+    }
+    #actionBar .actions {
+      pointer-events: auto;
+      background: rgba(245,240,232,0.92);
+      border: 1.5px solid var(--border);
+      padding: 0.45rem 0.6rem;
+      backdrop-filter: blur(6px);
+    }
+    /* Reserve space so content doesn't sit under the fixed bar */
+    .centerCol { padding-bottom: var(--actionBarReserve); }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Florida Man Bingo</h1>
-    <p>Generate headlines. Mark your matches.</p>
-  </header>
-  <div id="lobby">
-    <h2>Choose a mode</h2>
-    <div class="row left">
-      <div style="display:flex; flex-direction:column; gap:0.35rem; width:100%;">
-        <label for="playerName">Display name</label>
-        <input id="playerName" type="text" value="Player" autocomplete="nickname" />
+  <div class="layout">
+    <div id="lobby">
+      <h2>Choose a mode</h2>
+      <div class="row" id="modeButtons">
+        <button id="singleBtn" type="button">Single Player</button>
+        <button id="hostBtn" type="button">Host Multiplayer</button>
+        <button id="joinBtn" type="button">Join Multiplayer</button>
       </div>
-    </div>
-    <div class="row" id="modeButtons">
-      <button id="singleBtn">Single Player</button>
-      <button id="hostBtn">Host Multiplayer</button>
-      <button id="joinBtn">Join Multiplayer</button>
-    </div>
 
-    <div id="hostPanel">
-      <div class="muted">Send your Host ID to friends, then click Start when everyone has joined.</div>
-      <div class="row left" style="gap:0.5rem;">
-        <label>Host ID</label>
-        <span id="hostIdDisplay" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">…</span>
-        <button id="copyHostIdBtn" type="button">Copy</button>
+      <div id="hostPanel">
+        <div class="muted">Send your Host ID to friends, then click Start when everyone has joined.</div>
+        <div class="row left" style="gap:0.5rem;">
+          <label>Host ID</label>
+          <span id="hostIdDisplay" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">…</span>
+          <button id="copyHostIdBtn" type="button">Copy</button>
+        </div>
+        <div class="row">
+          <button id="startGameBtn" type="button" disabled>Start Game</button>
+          <button id="leaveBtn" type="button">Leave</button>
+        </div>
       </div>
-      <div class="row">
-        <button id="startGameBtn" type="button" disabled>Start Game</button>
+
+      <div id="joinPanel">
+        <div class="row left">
+          <div style="display:flex; flex-direction:column; gap:0.35rem; width:100%;">
+            <label for="hostIdInput">Host ID</label>
+            <input id="hostIdInput" type="text" placeholder="paste host id" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <button id="connectBtn" type="button">Connect</button>
+          <button id="leaveBtn2" type="button">Leave</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="centerCol">
+      <header>
+        <h1>Florida Man Bingo</h1>
+        <p>Generate headlines. Mark your matches.</p>
+      </header>
+      <div id="gameUI">
+        <div class="bingo-letters">
+          <div class="bingo-letter">B</div><div class="bingo-letter">I</div><div class="bingo-letter">N</div><div class="bingo-letter">G</div><div class="bingo-letter">O</div>
+        </div>
+        <div class="bingo-grid" id="grid"></div>
+        <div id="matchPrompt"></div>
+        <div class="headline-area">
+          <span class="headline-label">Current Headline</span>
+          <span id="headlineText" class="empty">Hit "Generate" to get your first headline.</span>
+          <span id="headlineMeta"></span>
+        </div>
+        <div id="status"></div>
       </div>
     </div>
-
-    <div id="joinPanel">
-      <div class="row left">
-        <div style="display:flex; flex-direction:column; gap:0.35rem; width:100%;">
-          <label for="hostIdInput">Host ID</label>
-          <input id="hostIdInput" type="text" placeholder="paste host id" autocomplete="off" />
-        </div>
-      </div>
-      <div class="row">
-        <button id="connectBtn" type="button">Connect</button>
-      </div>
-    </div>
-
-    <details id="peerSettings">
-      <summary>PeerJS settings (optional)</summary>
-      <div class="tiny" style="margin:0.5rem 0 0.8rem;">
-        Leave blank to use PeerJS defaults. If connections fail (common on public servers), run your own PeerServer and fill these in.
-      </div>
-      <div class="row left" style="justify-content: space-between;">
-        <div style="display:flex; flex-direction:column; gap:0.35rem; flex:1; min-width: 240px;">
-          <label for="peerHost">Host</label>
-          <input id="peerHost" type="text" placeholder="e.g. your-domain.com" autocomplete="off" />
-        </div>
-        <div style="display:flex; flex-direction:column; gap:0.35rem;">
-          <label for="peerPort">Port</label>
-          <input id="peerPort" type="number" min="1" max="65535" placeholder="443" />
-        </div>
-      </div>
-      <div class="row left" style="justify-content: space-between;">
-        <div style="display:flex; flex-direction:column; gap:0.35rem; flex:1; min-width: 240px;">
-          <label for="peerPath">Path</label>
-          <input id="peerPath" type="text" placeholder="/peerjs" autocomplete="off" />
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <input id="peerSecure" type="checkbox" checked />
-          <label for="peerSecure" style="text-transform:none; letter-spacing:0; font-size:0.85rem; color:var(--ink);">Secure (wss/https)</label>
-        </div>
-      </div>
-    </details>
   </div>
 
-  <div id="gameUI" hidden>
-    <div class="bingo-letters">
-      <div class="bingo-letter">B</div><div class="bingo-letter">I</div><div class="bingo-letter">N</div><div class="bingo-letter">G</div><div class="bingo-letter">O</div>
-    </div>
-    <div class="bingo-grid" id="grid"></div>
-    <div id="matchPrompt"></div>
-    <div class="headline-area">
-      <span class="headline-label">Current Headline</span>
-      <span id="headlineText" class="empty">Hit "Generate" to get your first headline.</span>
-      <span id="headlineMeta"></span>
-    </div>
-    <div id="status"></div>
+  <div id="actionBar">
     <div class="actions">
       <button id="generateBtn">Generate Headline</button>
-      <button id="newCardBtn">New Card</button>
+      <button id="newCardBtn">Shuffle Card</button>
+    </div>
+  </div>
+
+  <div id="modalOverlay" hidden>
+    <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Game Over</h3>
+      <div id="modalBody"></div>
+      <div id="modalActions">
+        <button id="shareBtn" type="button">Share card</button>
+        <button id="secondaryModalBtn" type="button">Leave</button>
+        <button id="primaryModalBtn" type="button">Play again</button>
+      </div>
     </div>
   </div>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -167,6 +244,23 @@
       "McDonald's","pizza","bottle","deputy","warrant",
       "stabbed","shot","caught","officer","jail",
       "pants","chicken","toilet","hammer","machete"
+    ];
+    const FALLBACK_HEADLINES = [
+      { title: "Florida man accused of throwing pizza at a neighbor during an argument over noise", url: "" },
+      { title: "Florida man arrested after allegedly trying to rob a store with a live alligator", url: "" },
+      { title: "Florida man charged after allegedly swinging a sword during a dispute", url: "" },
+      { title: "Florida man arrested for allegedly throwing a toilet through a window", url: "" },
+      { title: "Florida man detained after leading deputies on a bizarre Walmart scooter chase", url: "" },
+      { title: "Florida man arrested after allegedly wrestling a snake in a parking lot", url: "" },
+      { title: "Florida man charged after allegedly trying to steal beer while wearing no pants", url: "" },
+      { title: "Florida man accused of driving a car into a fast-food restaurant", url: "" },
+      { title: "Florida man arrested after allegedly threatening a deputy with a machete", url: "" },
+      { title: "Florida man accused of breaking into a home to cook chicken, then falling asleep", url: "" },
+      { title: "Florida man charged after allegedly throwing a bottle at a deputy", url: "" },
+      { title: "Florida man arrested after showing police a 'permit' printed at home", url: "" },
+      { title: "Florida man accused of stealing a taser and shocking himself", url: "" },
+      { title: "Florida man arrested after allegedly attempting to barter with meth during a traffic stop", url: "" },
+      { title: "Florida man charged after allegedly crashing a car into a patrol vehicle", url: "" }
     ];
     const FREE_INDEX = 12;
     const LINES = [
@@ -198,7 +292,6 @@
     const newCardBtn=document.getElementById("newCardBtn");
     const gameUI=document.getElementById("gameUI");
     const lobbyEl=document.getElementById("lobby");
-    const playerNameInput=document.getElementById("playerName");
     const singleBtn=document.getElementById("singleBtn");
     const hostBtn=document.getElementById("hostBtn");
     const joinBtn=document.getElementById("joinBtn");
@@ -209,19 +302,28 @@
     const startGameBtn=document.getElementById("startGameBtn");
     const hostIdInput=document.getElementById("hostIdInput");
     const connectBtn=document.getElementById("connectBtn");
-    const peerHostInput=document.getElementById("peerHost");
-    const peerPortInput=document.getElementById("peerPort");
-    const peerPathInput=document.getElementById("peerPath");
-    const peerSecureInput=document.getElementById("peerSecure");
+    const leaveBtn=document.getElementById("leaveBtn");
+    const leaveBtn2=document.getElementById("leaveBtn2");
+    const modalOverlay=document.getElementById("modalOverlay");
+    const modalTitle=document.getElementById("modalTitle");
+    const modalBody=document.getElementById("modalBody");
+    const primaryModalBtn=document.getElementById("primaryModalBtn");
+    const secondaryModalBtn=document.getElementById("secondaryModalBtn");
+    const shareBtn=document.getElementById("shareBtn");
 
     async function fetchBundledHeadlines() {
-      const res = await fetch("./data/headlines.json", { cache: "no-store" });
-      if (!res.ok) return [];
-      const json = await res.json();
-      const items = Array.isArray(json) ? json : (json?.items || []);
-      return items
-        .filter(h => typeof h?.title === "string" && h.title.length > 10)
-        .map(h => ({ title: h.title, url: typeof h.url === "string" ? h.url : "" }));
+      try{
+        const res = await fetch("./data/headlines.json", { cache: "no-store" });
+        if (!res.ok) return FALLBACK_HEADLINES;
+        const json = await res.json();
+        const items = Array.isArray(json) ? json : (json?.items || []);
+        const cleaned = items
+          .filter(h => typeof h?.title === "string" && h.title.length > 10)
+          .map(h => ({ title: h.title, url: typeof h.url === "string" ? h.url : "" }));
+        return cleaned.length ? cleaned : FALLBACK_HEADLINES;
+      }catch(_){
+        return FALLBACK_HEADLINES;
+      }
     }
 
     async function fetchRedditHeadlinesDirect() {
@@ -248,7 +350,7 @@
     async function fetchHeadlines() {
       // GitHub Pages blocks cross-origin Reddit JSON (CORS), so prefer same-origin bundled data.
       const bundled = await fetchBundledHeadlines().catch(() => []);
-      if (bundled.length >= 10) return bundled;
+      if (bundled.length >= 1) return bundled;
 
       // If bundled data is missing, attempt direct Reddit fetch (may still fail on some hosts).
       const host = location.hostname || "";
@@ -270,6 +372,8 @@
     function shuffleWithRng(arr, rng){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function randomHex(bytes=8){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return [...b].map(x=>x.toString(16).padStart(2,"0")).join("");}
     function computeWinLine(markedArr){for(const line of LINES){if(line.every(i=>markedArr[i])) return line;}return null;}
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));}
+    function getLocalDisplayName(){ return mp.enabled ? (mp.isHost ? "Host" : "Player") : "Player"; }
 
     function buildCard(seed, { preserveStatus = false } = {}) {
       const picked = seed ? shuffleWithRng(ALL_WORDS, rngFromSeed(seed)).slice(0,24) : shuffle(ALL_WORDS).slice(0,24);
@@ -288,6 +392,7 @@
         generateBtn.disabled = !mp.started || mp.gameOver;
       }
       renderGrid();
+      requestAnimationFrame(()=>{ fitGameToViewport(); });
     }
 
     function renderGrid() {
@@ -337,7 +442,13 @@
             cells[i].innerHTML=w?`<span class="cell-word">${w}</span>`:"🐊";
           });
           statusEl.textContent="BINGO! 🐊"; statusEl.className="win";
-          generateBtn.disabled=true; return;
+          generateBtn.disabled=true;
+          showEndModal({
+            title: "You won 🎉",
+            bodyHtml: "You got BINGO. Play again, or leave back to the lobby?",
+            canShare: true
+          });
+          return;
         }
       }
     }
@@ -437,6 +548,233 @@
           }
         });
       }
+      showEndModal({
+        title: isMe ? "You won 🎉" : "You lost",
+        bodyHtml: isMe
+          ? "You got BINGO. Want a rematch, or leave back to the lobby?"
+          : `${escapeHtml(payload.winnerName)} got BINGO. Want a rematch, or leave back to the lobby?`,
+        canShare: true
+      });
+    }
+
+    function showEndModal({ title, bodyHtml, canShare }){
+      modalTitle.textContent = title || "Game Over";
+      modalBody.innerHTML = bodyHtml || "";
+      shareBtn.hidden = !canShare;
+      modalOverlay.hidden = false;
+    }
+
+    function hideModal(){
+      modalOverlay.hidden = true;
+    }
+
+    function cardShareText(){
+      const rows = [];
+      for(let r=0;r<5;r++){
+        const row = [];
+        for(let c=0;c<5;c++){
+          const i = r*5 + c;
+          if(i === FREE_INDEX) row.push(marked[i] ? "[🐊]" : " 🐊 ");
+          else {
+            const w = (cardWords[i] || "").toString().toUpperCase();
+            const short = w.length > 10 ? w.slice(0,10) + "…" : w;
+            row.push((marked[i] ? "[X]" : "[ ]") + short);
+          }
+        }
+        rows.push(row.join("  "));
+      }
+      const head = headlineText.textContent && !headlineText.classList.contains("empty") ? headlineText.textContent : "";
+      const who = getLocalDisplayName();
+      return [
+        "Florida Man Bingo",
+        `Player: ${who}`,
+        head ? `Headline: ${head}` : "",
+        "",
+        ...rows
+      ].filter(Boolean).join("\n");
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3){
+      const words = String(text || "").split(/\s+/).filter(Boolean);
+      const lines = [];
+      let current = "";
+      for(const w of words){
+        const test = current ? `${current} ${w}` : w;
+        if(ctx.measureText(test).width <= maxWidth){
+          current = test;
+        } else {
+          if(current) lines.push(current);
+          current = w;
+        }
+        if(lines.length >= maxLines) break;
+      }
+      if(lines.length < maxLines && current) lines.push(current);
+      if(lines.length === maxLines && words.length > 0){
+        const last = lines[lines.length-1];
+        if(ctx.measureText(last).width > maxWidth){
+          let trimmed = last;
+          while(trimmed.length > 0 && ctx.measureText(trimmed + "…").width > maxWidth) trimmed = trimmed.slice(0, -1);
+          lines[lines.length-1] = trimmed + "…";
+        } else if(words.join(" ").length > lines.join(" ").length){
+          lines[lines.length-1] = last + "…";
+        }
+      }
+      lines.forEach((ln, i) => ctx.fillText(ln, x, y + i*lineHeight));
+      return lines.length;
+    }
+
+    function renderCardCanvas(){
+      const canvas = document.createElement("canvas");
+      const cell = 110;
+      const pad = 26;
+      const grid = cell*5;
+      const headerH = 120;
+      const footerH = 18;
+      canvas.width = pad*2 + grid;
+      canvas.height = pad*2 + headerH + grid + footerH;
+      const ctx = canvas.getContext("2d");
+
+      // Background
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#f5f0e8";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#1a1a1a";
+      const border = getComputedStyle(document.documentElement).getPropertyValue("--border").trim() || ink;
+      const markedBg = getComputedStyle(document.documentElement).getPropertyValue("--marked-bg").trim() || ink;
+      const markedText = getComputedStyle(document.documentElement).getPropertyValue("--marked-text").trim() || "#f5f0e8";
+      const win = getComputedStyle(document.documentElement).getPropertyValue("--win").trim() || "#c8392b";
+
+      // Header
+      const who = getLocalDisplayName();
+      ctx.fillStyle = ink;
+      ctx.font = "28px Georgia, 'Times New Roman', serif";
+      ctx.fillText("Florida Man Bingo", pad, pad + 34);
+      ctx.font = "16px Georgia, 'Times New Roman', serif";
+      ctx.fillText(`Player: ${who}`, pad, pad + 62);
+      const head = headlineText.textContent && !headlineText.classList.contains("empty") ? headlineText.textContent.replace(/^[“"]|[”"]$/g, "") : "";
+      ctx.fillStyle = "#555";
+      ctx.font = "15px Georgia, 'Times New Roman', serif";
+      wrapText(ctx, head ? `Headline: ${head}` : "Headline: (none yet)", pad, pad + 86, canvas.width - pad*2, 18, 2);
+
+      // Grid
+      const startX = pad;
+      const startY = pad + headerH;
+      const winLine = computeWinLine(marked);
+
+      ctx.lineWidth = 2;
+      for(let r=0;r<5;r++){
+        for(let c=0;c<5;c++){
+          const i = r*5 + c;
+          const x = startX + c*cell;
+          const y = startY + r*cell;
+          const isFree = i === FREE_INDEX;
+          const isWinCell = Array.isArray(winLine) && winLine.includes(i);
+
+          // Fill
+          if(isWinCell){
+            ctx.fillStyle = win;
+            ctx.fillRect(x, y, cell, cell);
+          } else if(marked[i]){
+            ctx.fillStyle = markedBg;
+            ctx.fillRect(x, y, cell, cell);
+          } else {
+            ctx.fillStyle = ctx.fillStyle = (getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#f5f0e8");
+            ctx.fillRect(x, y, cell, cell);
+          }
+
+          // Border
+          ctx.strokeStyle = border;
+          ctx.strokeRect(x, y, cell, cell);
+
+          // Text
+          if(isFree){
+            ctx.fillStyle = marked[i] || isWinCell ? "#fff" : ink;
+            ctx.font = "44px Georgia, 'Times New Roman', serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🐊", x + cell/2, y + cell/2 + 2);
+            ctx.textAlign = "left";
+            ctx.textBaseline = "alphabetic";
+          } else {
+            const word = (cardWords[i] || "").toString().toUpperCase();
+            ctx.fillStyle = (marked[i] || isWinCell) ? (isWinCell ? "#fff" : markedText) : ink;
+            ctx.font = "bold 12px Georgia, 'Times New Roman', serif";
+            const innerPad = 10;
+            const maxW = cell - innerPad*2;
+            const lineH = 14;
+            const linesUsed = wrapText(ctx, word, x + innerPad, y + 30, maxW, lineH, 3);
+            if(linesUsed < 1){
+              // noop
+            }
+          }
+        }
+      }
+
+      // Footer
+      ctx.fillStyle = "#777";
+      ctx.font = "12px Georgia, 'Times New Roman', serif";
+      ctx.fillText(new Date().toLocaleString(), pad, canvas.height - pad + 4);
+
+      return canvas;
+    }
+
+    async function shareWinningCardImage(){
+      try{
+        const canvas = renderCardCanvas();
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        if(!blob){
+          throw new Error("Failed to create image");
+        }
+        const file = new File([blob], "florida-man-bingo.png", { type: "image/png" });
+        if(navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share){
+          await navigator.share({ title: "Florida Man Bingo", files: [file] });
+          return;
+        }
+        // Fallback: download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "florida-man-bingo.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        statusEl.textContent = "Downloaded card image.";
+      }catch(e){
+        // Fallback: text share/copy
+        const text = cardShareText();
+        if(navigator.share){
+          try{ await navigator.share({ title: "Florida Man Bingo", text }); return; }catch(_){}
+        }
+        try{ await navigator.clipboard.writeText(text); statusEl.textContent = "Copied card as text (image share blocked)."; }catch(_){ statusEl.textContent = "Couldn't share card."; }
+      }
+    }
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+    function fitGameToViewport(){
+      // Since we force `overflow-y: hidden`, we must ensure the actions row stays visible.
+      const actions = document.querySelector("#actionBar .actions");
+      const centerCol = document.querySelector(".centerCol");
+      if(!actions || !centerCol) return;
+
+      const safe = 10;
+      let cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gridSize")) || 520;
+      cur = clamp(cur, 260, 560);
+
+      // Reserve space for the fixed action bar (so content doesn't sit underneath it).
+      const actionBarHeight = actions.getBoundingClientRect().height;
+      document.documentElement.style.setProperty("--actionBarReserve", `${Math.ceil(actionBarHeight + 20)}px`);
+
+      // Iteratively shrink until everything fits (a few passes handles font/layout reflow).
+      for(let pass=0; pass<6; pass++){
+        const actionTop = actions.getBoundingClientRect().top;
+        const bottomLimit = actionTop - safe;
+        const contentBottom = centerCol.getBoundingClientRect().bottom - (actionBarHeight + 20);
+        const overflow = contentBottom - bottomLimit;
+        if(overflow <= 0) break;
+        cur = clamp(cur - overflow - 8, 260, 560);
+        document.documentElement.style.setProperty("--gridSize", `${Math.floor(cur)}px`);
+      }
     }
 
     function updateMatchPrompt(){
@@ -445,16 +783,7 @@
     }
 
     function getPeerOptions(){
-      const host = (peerHostInput.value || "").trim();
-      const portStr = (peerPortInput.value || "").toString().trim();
-      const path = (peerPathInput.value || "").trim();
-      const secure = !!peerSecureInput.checked;
-      const opts = { debug: 1 };
-      if(host) opts.host = host;
-      if(portStr) opts.port = Number(portStr);
-      if(path) opts.path = path;
-      if(host || portStr || path) opts.secure = secure;
-      return opts;
+      return { debug: 1 };
     }
 
     function resetGameUI(){
@@ -477,9 +806,7 @@
     function enterMode(nextMode){
       mode = nextMode;
       mp.enabled = nextMode === "mp-host" || nextMode === "mp-join";
-      lobbyEl.hidden = nextMode === "single";
-      document.getElementById("modeButtons").hidden = mp.enabled;
-      gameUI.hidden = false;
+      document.getElementById("modeButtons").hidden = false;
       hostPanel.classList.remove("active");
       joinPanel.classList.remove("active");
     }
@@ -490,15 +817,14 @@
       generateBtn.disabled=true; newCardBtn.disabled=true;
       statusEl.textContent="Loading headlines...";
       headlines=await fetchHeadlines();
-      if(headlines.length<10){
-        statusEl.textContent = location.protocol === "file:"
-          ? "Open this page via a local server (not file://) to load headlines."
-          : "Couldn't load headlines. Try refreshing.";
+      if(headlines.length<1){
+        statusEl.textContent = "Couldn't load headlines. Try refreshing.";
         return;
       }
       statusEl.textContent="";
       generateBtn.disabled=false; newCardBtn.disabled=false;
       buildCard(undefined, { preserveStatus: false });
+      requestAnimationFrame(()=>{ fitGameToViewport(); });
     }
 
     function teardownPeer(){
@@ -508,6 +834,19 @@
         mp.conns.clear();
         if(mp.peer){ mp.peer.destroy(); mp.peer = null; }
       }catch(_){}
+    }
+
+    function leaveToLobby(){
+      hideModal();
+      teardownPeer();
+      mp.enabled = false;
+      mp.isHost = false;
+      mp.started = false;
+      mp.gameOver = false;
+      mp.players.clear();
+      hostPanel.classList.remove("active");
+      joinPanel.classList.remove("active");
+      initSingle();
     }
 
     async function initHost(){
@@ -541,7 +880,7 @@
 
       // Host loads headlines once; clients receive headlines via broadcast.
       headlines = await fetchHeadlines();
-      if(headlines.length < 10){
+      if(headlines.length < 1){
         statusEl.textContent = "Couldn't load headlines for host. Try refreshing.";
         return;
       }
@@ -552,10 +891,11 @@
         mp.myId = id;
         hostIdDisplay.textContent = id;
         statusEl.textContent = "Host ready. Waiting for players to join…";
-        mp.players.set(id, { name: (playerNameInput.value || "Host").trim() || "Host", marked: new Array(25).fill(false) });
+        mp.players.set(id, { name: "Host", marked: new Array(25).fill(false) });
         mp.players.get(id).marked[FREE_INDEX] = true;
         buildCard(`${mp.seed}|${mp.myId}|${mp.cardNonce}`, { preserveStatus: true });
         startGameBtn.disabled = false;
+        requestAnimationFrame(()=>{ fitGameToViewport(); });
       });
       peer.on("connection", (conn) => {
         mp.conns.set(conn.peer, conn);
@@ -580,6 +920,10 @@
           }
           if(data.type === "mark" && Number.isInteger(data.i)){
             hostApplyMark(conn.peer, data.i);
+            return;
+          }
+          if(data.type === "rematchRequest"){
+            statusEl.textContent = `${mp.players.get(conn.peer)?.name || "Player"} wants a rematch.`;
             return;
           }
         });
@@ -634,8 +978,7 @@
         const conn = peer.connect(cleanHostId, { reliable: true });
         mp.hostConn = conn;
         conn.on("open", () => {
-          const name = (playerNameInput.value || "Player").trim().slice(0, 40) || "Player";
-          conn.send({ type: "hello", name });
+          conn.send({ type: "hello", name: "Player" });
         });
         conn.on("data", (data) => {
           if(!data || typeof data !== "object") return;
@@ -648,6 +991,7 @@
             mp.gameOver = !!data.gameOver;
             newCardBtn.disabled = mp.started;
             generateBtn.disabled = !mp.started;
+            requestAnimationFrame(()=>{ fitGameToViewport(); });
             return;
           }
           if(data.type === "start"){
@@ -660,6 +1004,20 @@
           }
           if(data.type === "gameOver"){
             applyGameOver(data);
+            return;
+          }
+          if(data.type === "restart"){
+            mp.seed = (data.seed || "").toString();
+            mp.started = false;
+            mp.gameOver = false;
+            usedIndices = [];
+            won = false;
+            mp.cardNonce = 0;
+            buildCard(`${mp.seed}|${mp.myId}|${mp.cardNonce}`, { preserveStatus: true });
+            statusEl.textContent = "Rematch ready. Waiting for host to start…";
+            newCardBtn.disabled = false;
+            generateBtn.disabled = true;
+            hideModal();
             return;
           }
         });
@@ -711,6 +1069,8 @@
         statusEl.textContent = "Couldn't copy. Select and copy the Host ID manually.";
       }
     });
+    leaveBtn.addEventListener("click", leaveToLobby);
+    leaveBtn2.addEventListener("click", leaveToLobby);
 
     generateBtn.addEventListener("click", () => {
       if(mode === "single") generateHeadlineSingle();
@@ -722,21 +1082,62 @@
         buildCard(undefined, { preserveStatus: false });
         return;
       }
-      if(mp.enabled){
-        if(mp.started){
-          statusEl.textContent = "New cards are disabled once multiplayer starts.";
+        if(mp.enabled){
+          if(mp.started){
+          statusEl.textContent = "Shuffling is disabled once multiplayer starts.";
           return;
         }
         mp.cardNonce++;
         const seed = `${mp.seed || "pending"}|${mp.myId || "me"}|${mp.cardNonce}`;
         buildCard(seed, { preserveStatus: true });
-        statusEl.textContent = "New card generated.";
+        statusEl.textContent = "Card shuffled.";
       }
     });
 
-    // Initial lobby state
-    gameUI.hidden = true;
-    resetGameUI();
+    modalOverlay.addEventListener("click", (e) => {
+      if(e.target === modalOverlay) hideModal();
+    });
+    secondaryModalBtn.addEventListener("click", leaveToLobby);
+    primaryModalBtn.addEventListener("click", () => {
+      hideModal();
+      if(mode === "single"){
+        buildCard(undefined, { preserveStatus: false });
+        statusEl.textContent = "";
+        return;
+      }
+      if(mp.enabled){
+        if(mp.isHost){
+          mp.seed = randomHex(12);
+          mp.started = false;
+          mp.gameOver = false;
+          usedIndices = [];
+          won = false;
+          mp.cardNonce = 0;
+          buildCard(`${mp.seed}|${mp.myId}|${mp.cardNonce}`, { preserveStatus: true });
+          hostBroadcast({ type: "restart", seed: mp.seed });
+          statusEl.textContent = "Rematch ready. Click Start when ready.";
+          startGameBtn.disabled = false;
+          newCardBtn.disabled = false;
+          generateBtn.disabled = true;
+        } else if(mp.hostConn && mp.hostConn.open){
+          mp.hostConn.send({ type: "rematchRequest" });
+          statusEl.textContent = "Requested rematch. Waiting for host…";
+        }
+      }
+    });
+    shareBtn.addEventListener("click", async () => {
+      await shareWinningCardImage();
+    });
+
+    // Default: single-player with card visible
+    initSingle();
+    window.addEventListener("resize", () => {
+      // Allow a tiny bit of reflow before measuring.
+      requestAnimationFrame(()=>{ fitGameToViewport(); });
+    });
+    // Fonts can change layout after first paint.
+    requestAnimationFrame(()=>{ fitGameToViewport(); });
+    requestAnimationFrame(()=>{ fitGameToViewport(); });
   </script>
 </body>
 </html>
