@@ -2,6 +2,8 @@ const input = document.getElementById("wordInput");
 const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
+const scriptUrl = new URL(document.currentScript.src);
+const headlinesUrl = new URL("../data/headlines.json", scriptUrl);
 
 let headlineData = null;
 
@@ -23,8 +25,7 @@ input.addEventListener("keydown", async (e) => {
 async function loadHeadlines() {
   if (headlineData) return headlineData;
 
-  const dataUrl = new URL("../data/headlines.json", window.location.href);
-  const res = await fetch(dataUrl, { cache: "no-store" });
+  const res = await fetch(headlinesUrl, { cache: "no-store" });
   if (!res.ok) throw new Error(`Headline data request failed (${res.status})`);
 
   const json = await res.json();
