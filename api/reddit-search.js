@@ -1,5 +1,6 @@
 const CACHE_TTL_MS = 30_000;
 const cache = new Map();
+const bundledHeadlines = require("../data/headlines.json");
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -10,6 +11,28 @@ function setCors(res) {
 
 function sendJson(res, statusCode, payload) {
   res.status(statusCode).json(payload);
+}
+
+function createFallbackPayload(word) {
+  const searchUrl = `https://www.reddit.com/r/FloridaMan/search/?q=${encodeURIComponent(`Florida Man ${word}`)}&restrict_sr=1`;
+  const items = Array.isArray(bundledHeadlines)
+    ? bundledHeadlines
+    : (bundledHeadlines.items || []);
+
+  return {
+    kind: "Listing",
+    source: "bundled-fallback",
+    data: {
+      children: items.map((item, index) => ({
+        kind: "t3",
+        data: {
+          title: item.title,
+          created_utc: Date.now() / 1000 - index * 86400,
+          url: item.url || searchUrl
+        }
+      }))
+    }
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -68,12 +91,18 @@ module.exports = async function handler(req, res) {
     try {
       payload = JSON.parse(text);
     } catch {
-      sendJson(res, 502, { error: "Upstream returned invalid JSON" });
+      const fallbackPayload = createFallbackPayload(word);
+      cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
+      res.setHeader("X-Fallback", "invalid-upstream-json");
+      sendJson(res, 200, fallbackPayload);
       return;
     }
 
     if (!upstream.ok) {
-      sendJson(res, upstream.status, payload);
+      const fallbackPayload = createFallbackPayload(word);
+      cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
+      res.setHeader("X-Fallback", `upstream-${upstream.status}`);
+      sendJson(res, 200, fallbackPayload);
       return;
     }
 
@@ -87,9 +116,9 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 200, payload);
   } catch (err) {
-    sendJson(res, 502, {
-      error: "Failed to reach Reddit",
-      detail: String(err?.message || err)
-    });
+    const fallbackPayload = createFallbackPayload(word);
+    cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
+    res.setHeader("X-Fallback", "fetch-error");
+    sendJson(res, 200, fallbackPayload);
   }
 };
