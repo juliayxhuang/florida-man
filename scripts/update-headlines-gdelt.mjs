@@ -1,0 +1,187 @@
+import fs from "node:fs/promises";
+import https from "node:https";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, "..");
+const outPath = path.join(repoRoot, "data", "headlines.json");
+const targetCount = Number(process.argv[2] || 1000);
+const maxDaysBack = Number(process.argv[3] || 90);
+const windowDays = 3;
+const maxRecords = 250;
+const retryCount = 3;
+
+const query = '("Florida man" OR "Florida woman")';
+const allowedTitlePattern = /\bflorida\s+(man|woman)\b/i;
+const blockedTitlePattern = /\b(obituary|newsletter|horoscope|lottery results)\b/i;
+
+const stopWords = new Set([
+  "after", "again", "against", "and", "are", "for", "from", "has", "have",
+  "into", "man", "new", "not", "over", "say", "says", "the", "this", "was",
+  "who", "with", "woman"
+]);
+
+function formatGdeltDate(date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const minute = String(date.getUTCMinutes()).padStart(2, "0");
+  const second = String(date.getUTCSeconds()).padStart(2, "0");
+  return `${year}${month}${day}${hour}${minute}${second}`;
+}
+
+function parseGdeltDate(value) {
+  if (!value || value.length < 8) return "";
+  return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+}
+
+function cleanTitle(title) {
+  return title
+    .replace(/\s+([?.!,;:])/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function keywordsFromTitle(title, domain) {
+  const words = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWords.has(word));
+  const domainWords = String(domain || "")
+    .replace(/^www\./, "")
+    .split(/[.\-]/)
+    .filter((word) => word.length > 2);
+  return [...new Set([...words, ...domainWords])].slice(0, 16);
+}
+
+function normalizeArticle(article) {
+  const title = cleanTitle(article.title || "");
+  if (!allowedTitlePattern.test(title) || blockedTitlePattern.test(title)) return null;
+  if (!article.url || !article.domain) return null;
+
+  return {
+    title,
+    url: article.url,
+    source: article.domain,
+    date: parseGdeltDate(article.seendate),
+    image: article.socialimage || "",
+    keywords: keywordsFromTitle(title, article.domain)
+  };
+}
+
+async function fetchWindow(startDate, endDate) {
+  const url = new URL("https://api.gdeltproject.org/api/v2/doc/doc");
+  url.searchParams.set("query", query);
+  url.searchParams.set("mode", "artlist");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("sort", "datedesc");
+  url.searchParams.set("maxrecords", String(maxRecords));
+  url.searchParams.set("startdatetime", formatGdeltDate(startDate));
+  url.searchParams.set("enddatetime", formatGdeltDate(endDate));
+
+  const payload = await fetchJsonWithRetries(url);
+  return Array.isArray(payload.articles) ? payload.articles : [];
+}
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "florida-man-generator/1.0 dataset builder"
+      },
+      timeout: 20_000
+    }, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        body += chunk;
+      });
+      res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`GDELT request failed (${res.statusCode})`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(body));
+        } catch {
+          reject(new Error("GDELT returned invalid JSON"));
+        }
+      });
+    });
+
+    req.on("timeout", () => {
+      req.destroy(new Error("GDELT request timed out"));
+    });
+    req.on("error", reject);
+  });
+}
+
+async function fetchJsonWithRetries(url) {
+  let lastError;
+  for (let attempt = 1; attempt <= retryCount; attempt += 1) {
+    try {
+      return await fetchJson(url);
+    } catch (err) {
+      lastError = err;
+      if (attempt < retryCount) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function main() {
+  const seen = new Set();
+  const items = [];
+  const now = new Date();
+
+  for (let offset = 0; offset < maxDaysBack && items.length < targetCount; offset += windowDays) {
+    const endDate = new Date(now.getTime() - offset * 86400_000);
+    const startDate = new Date(now.getTime() - (offset + windowDays) * 86400_000);
+    process.stdout.write(`Fetching ${formatGdeltDate(startDate)}-${formatGdeltDate(endDate)}... `);
+
+    try {
+      const articles = await fetchWindow(startDate, endDate);
+      let added = 0;
+      for (const article of articles) {
+        const item = normalizeArticle(article);
+        if (!item) continue;
+        const key = item.url.toLowerCase();
+        const titleKey = item.title.toLowerCase();
+        if (seen.has(key) || seen.has(titleKey)) continue;
+        seen.add(key);
+        seen.add(titleKey);
+        items.push(item);
+        added += 1;
+        if (items.length >= targetCount) break;
+      }
+      console.log(`${added} added (${items.length} total)`);
+    } catch (err) {
+      console.log(`skipped: ${err.message}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+
+  const output = {
+    version: 2,
+    generatedAt: new Date().toISOString(),
+    source: "gdelt-doc-2.0",
+    query,
+    count: items.length,
+    items
+  };
+
+  await fs.writeFile(outPath, `${JSON.stringify(output, null, 2)}\n`);
+  console.log(`Wrote ${items.length} sourced headlines to ${path.relative(repoRoot, outPath)}.`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

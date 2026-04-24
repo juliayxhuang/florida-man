@@ -3,85 +3,87 @@ const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
 
+let headlineData = null;
+
 input.addEventListener("keydown", async (e) => {
-  if (e.key === "Enter") {
-    const value = input.value.trim();
+  if (e.key !== "Enter") return;
 
-    // ❌ too many words
-    if (value.split(" ").length > 1) {
-      headlineEl.textContent = "Too many words.";
-      metaEl.textContent = "";
-      linkEl.textContent = "";
-      return;
-    }
-
-    if (!value) return;
-
-    fetchHeadline(value);
+  const value = input.value.trim();
+  if (value.split(/\s+/).length > 1) {
+    headlineEl.textContent = "Too many words.";
+    metaEl.textContent = "";
+    linkEl.textContent = "";
+    return;
   }
+
+  if (!value) return;
+  fetchHeadline(value);
 });
+
+async function loadHeadlines() {
+  if (headlineData) return headlineData;
+
+  const dataUrl = new URL("../data/headlines.json", window.location.href);
+  const res = await fetch(dataUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Headline data request failed (${res.status})`);
+
+  const json = await res.json();
+  headlineData = Array.isArray(json) ? json : (json.items || []);
+  return headlineData;
+}
+
+function matchesHeadline(item, word) {
+  const needle = word.toLowerCase();
+  const haystack = [
+    item.title,
+    item.source,
+    ...(Array.isArray(item.keywords) ? item.keywords : [])
+  ].join(" ").toLowerCase();
+
+  return haystack.includes(needle);
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
 
 async function fetchHeadline(word) {
   headlineEl.textContent = "Loading...";
   metaEl.textContent = "";
   linkEl.textContent = "";
+  linkEl.removeAttribute("href");
 
   try {
-    const params = new URLSearchParams({ word });
-    const res = await fetch(`/api/reddit-search?${params.toString()}`);
-    if (!res.ok) throw new Error(`Proxy request failed (${res.status})`);
+    const headlines = await loadHeadlines();
+    const matches = headlines.filter((item) => matchesHeadline(item, word));
 
-    const data = await res.json();
-    const isFallback = data?.source === "bundled-fallback";
-    const posts = data?.data?.children || [];
-
-    // filter titles that actually include the word
-    const matchingPosts = posts.filter(p =>
-      p.data.title.toLowerCase().includes(word.toLowerCase())
-    );
-
-    // fallback
-    if (matchingPosts.length === 0) {
-      headlineEl.textContent = isFallback
-        ? `No saved headline found for "${word}". Try meth, pizza, car, or alligator.`
-        : `Couldn't find "${word}", but try another word.`;
+    if (matches.length === 0) {
+      headlineEl.textContent = `No saved headline found for "${word}". Try arrest, police, car, beach, or Florida.`;
       return;
     }
 
-    const randomPost = matchingPosts[Math.floor(Math.random() * matchingPosts.length)];
+    const pick = matches[Math.floor(Math.random() * matches.length)];
+    const formattedDate = formatDate(pick.date);
+    const source = (pick.source || "UNKNOWN SOURCE").toUpperCase();
 
-    const title = randomPost.data.title;
-    const createdUTC = randomPost.data.created_utc;
-    const postUrl = randomPost.data.url;
+    headlineEl.textContent = pick.title;
+    metaEl.textContent = [formattedDate, source].filter(Boolean).join(" · ");
 
-    // DATE
-    const date = new Date(createdUTC * 1000);
-    const formattedDate = date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-
-    // "PUBLISHER" from domain
-    let publisher = "UNKNOWN SOURCE";
-    try {
-      const domain = new URL(postUrl).hostname.replace("www.", "");
-      publisher = domain.toUpperCase();
-    } catch {}
-
-    // UPDATE UI
-    headlineEl.textContent = title;
-    metaEl.textContent = `${formattedDate} · ${publisher}`;
-    linkEl.href = postUrl;
-    linkEl.textContent = "READ ARTICLE";
-
+    if (pick.url) {
+      linkEl.href = pick.url;
+      linkEl.textContent = "READ ARTICLE";
+    }
   } catch (err) {
     console.error(err);
-    const msg = String(err?.message || err || "");
-    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-      headlineEl.textContent = "Can’t reach the API server. Run npm start locally, or deploy this project to Vercel.";
-    } else {
-      headlineEl.textContent = "Florida Man is being chaotic right now.";
-    }
+    headlineEl.textContent = "Couldn't load the headline database.";
   }
 }

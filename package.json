@@ -2,7 +2,8 @@
   "name": "florida-man",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "headlines:update": "node scripts/update-headlines-gdelt.mjs 500 730",
+    "headlines:update:large": "node scripts/update-headlines-gdelt.mjs 1000 1460"
   }
 }
-
