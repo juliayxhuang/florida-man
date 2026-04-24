@@ -28,3 +28,41 @@ If you host the frontend on GitHub Pages but the API on Vercel, set `VERCEL_API_
 ```js
 const VERCEL_API_ORIGIN = "https://your-project.vercel.app";
 ```
+
+## Reddit OAuth Setup
+
+The live search API uses Reddit OAuth when these Vercel environment variables are present:
+
+- `REDDIT_CLIENT_ID`
+- `REDDIT_CLIENT_SECRET`
+- `REDDIT_USER_AGENT` (optional, but recommended)
+
+Create the credentials:
+
+1. Go to `https://www.reddit.com/prefs/apps`.
+2. Click `create app` or `create another app`.
+3. Choose `script`.
+4. Add any valid URL for `redirect uri`, such as `https://florida-man-chi.vercel.app`.
+5. Save the app.
+6. Copy the app ID under the app name into `REDDIT_CLIENT_ID`.
+7. Copy `secret` into `REDDIT_CLIENT_SECRET`.
+8. Use a clear user agent, for example:
+
+```txt
+florida-man-generator/1.0 by YOUR_REDDIT_USERNAME
+```
+
+Add them in Vercel:
+
+1. Open the Vercel project.
+2. Go to `Settings` -> `Environment Variables`.
+3. Add the variables above for Production.
+4. Redeploy the project.
+
+To confirm live Reddit search is being used, test:
+
+```txt
+https://florida-man-chi.vercel.app/api/reddit-search?word=meth
+```
+
+A live OAuth response includes the response header `X-Source: reddit-oauth`. If Reddit or the credentials fail, the API returns bundled fallback headlines with an `X-Fallback` header.

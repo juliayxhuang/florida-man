@@ -2,7 +2,6 @@ const input = document.getElementById("wordInput");
 const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
-const VERCEL_API_ORIGIN = "";
 
 input.addEventListener("keydown", async (e) => {
   if (e.key === "Enter") {
@@ -29,58 +28,27 @@ async function fetchHeadline(word) {
 
   try {
     const params = new URLSearchParams({ word });
-    const apiPath = `/api/reddit-search?${params.toString()}`;
-    const sameOriginUrl = apiPath;
-    const vercelProxyUrl = VERCEL_API_ORIGIN
-      ? `${VERCEL_API_ORIGIN.replace(/\/$/, "")}${apiPath}`
-      : "";
-    const apiHost = window.location.hostname || "localhost";
-    const localProxyUrl = `http://${apiHost}:3000/api/reddit-search?${params.toString()}`;
-
-    const urls = [];
-    const isLocalDevServer = window.location.port === "3000";
-    const isLiveServer = window.location.port === "5500";
-    const isGithubPages = window.location.hostname.endsWith("github.io");
-
-    if (vercelProxyUrl && isGithubPages) urls.push(vercelProxyUrl);
-    if (!isLiveServer) urls.push(sameOriginUrl);
-    if (isLocalDevServer || isLiveServer) urls.push(localProxyUrl);
-    if (vercelProxyUrl && !urls.includes(vercelProxyUrl)) urls.push(vercelProxyUrl);
-
-    let res = null;
-    let lastError = null;
-    for (const url of urls) {
-      try {
-        res = await fetch(url);
-        if (res.ok) break;
-        lastError = new Error(`Proxy request failed (${res.status})`);
-      } catch (err) {
-        lastError = err;
-      }
-    }
-    if (!res || !res.ok) throw lastError || new Error("Proxy request failed");
+    const res = await fetch(`/api/reddit-search?${params.toString()}`);
+    if (!res.ok) throw new Error(`Proxy request failed (${res.status})`);
 
     const data = await res.json();
-
-    let posts = data?.data?.children || [];
+    const isFallback = data?.source === "bundled-fallback";
+    const posts = data?.data?.children || [];
 
     // filter titles that actually include the word
-    posts = posts.filter(p =>
+    const matchingPosts = posts.filter(p =>
       p.data.title.toLowerCase().includes(word.toLowerCase())
     );
 
     // fallback
-    if (posts.length === 0) {
-      headlineEl.textContent = "Couldn't find that word, but here's a random headline.";
-      posts = data?.data?.children || [];
-    }
-
-    if (!posts || posts.length === 0) {
-      headlineEl.textContent = "Florida Man is being chaotic right now.";
+    if (matchingPosts.length === 0) {
+      headlineEl.textContent = isFallback
+        ? `No saved headline found for "${word}". Try meth, pizza, car, or alligator.`
+        : `Couldn't find "${word}", but try another word.`;
       return;
     }
 
-    const randomPost = posts[Math.floor(Math.random() * posts.length)];
+    const randomPost = matchingPosts[Math.floor(Math.random() * matchingPosts.length)];
 
     const title = randomPost.data.title;
     const createdUTC = randomPost.data.created_utc;

@@ -1,5 +1,6 @@
 const CACHE_TTL_MS = 30_000;
 const cache = new Map();
+let tokenCache = null;
 const bundledHeadlines = require("../data/headlines.json");
 
 function setCors(res) {
@@ -15,15 +16,17 @@ function sendJson(res, statusCode, payload) {
 
 function createFallbackPayload(word) {
   const searchUrl = `https://www.reddit.com/r/FloridaMan/search/?q=${encodeURIComponent(`Florida Man ${word}`)}&restrict_sr=1`;
+  const needle = word.toLowerCase();
   const items = Array.isArray(bundledHeadlines)
     ? bundledHeadlines
     : (bundledHeadlines.items || []);
+  const matches = items.filter((item) => item.title.toLowerCase().includes(needle));
 
   return {
     kind: "Listing",
     source: "bundled-fallback",
     data: {
-      children: items.map((item, index) => ({
+      children: matches.map((item, index) => ({
         kind: "t3",
         data: {
           title: item.title,
@@ -33,6 +36,74 @@ function createFallbackPayload(word) {
       }))
     }
   };
+}
+
+function getUserAgent() {
+  return process.env.REDDIT_USER_AGENT || "florida-man-generator/1.0 by juliayxhuang";
+}
+
+async function getRedditAccessToken() {
+  const clientId = process.env.REDDIT_CLIENT_ID;
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing Reddit OAuth credentials");
+  }
+
+  if (tokenCache && tokenCache.expiresAt > Date.now() + 60_000) {
+    return tokenCache.accessToken;
+  }
+
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const body = new URLSearchParams({ grant_type: "client_credentials" });
+
+  const response = await fetch("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": getUserAgent()
+    },
+    body
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.access_token) {
+    throw new Error(`Reddit token request failed (${response.status})`);
+  }
+
+  tokenCache = {
+    accessToken: payload.access_token,
+    expiresAt: Date.now() + Number(payload.expires_in || 3600) * 1000
+  };
+
+  return tokenCache.accessToken;
+}
+
+async function searchReddit(word) {
+  const accessToken = await getRedditAccessToken();
+  const redditUrl = new URL("https://oauth.reddit.com/r/FloridaMan/search");
+  redditUrl.searchParams.set("q", `Florida Man ${word}`);
+  redditUrl.searchParams.set("restrict_sr", "1");
+  redditUrl.searchParams.set("sort", "relevance");
+  redditUrl.searchParams.set("limit", "25");
+  redditUrl.searchParams.set("type", "link");
+  redditUrl.searchParams.set("raw_json", "1");
+
+  const upstream = await fetch(redditUrl.toString(), {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": getUserAgent()
+    }
+  });
+
+  const payload = await upstream.json().catch(() => null);
+  if (!upstream.ok || !payload) {
+    throw new Error(`Reddit search failed (${upstream.status})`);
+  }
+
+  return payload;
 }
 
 module.exports = async function handler(req, res) {
@@ -71,43 +142,11 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const redditUrl = new URL("https://www.reddit.com/r/FloridaMan/search.json");
-  redditUrl.searchParams.set("q", `Florida Man ${word}`);
-  redditUrl.searchParams.set("restrict_sr", "1");
-  redditUrl.searchParams.set("sort", "relevance");
-  redditUrl.searchParams.set("limit", "25");
-  redditUrl.searchParams.set("raw_json", "1");
-
   try {
-    const upstream = await fetch(redditUrl.toString(), {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "florida-man-project/1.0 (vercel api)"
-      }
-    });
-
-    const text = await upstream.text();
-    let payload;
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      const fallbackPayload = createFallbackPayload(word);
-      cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
-      res.setHeader("X-Fallback", "invalid-upstream-json");
-      sendJson(res, 200, fallbackPayload);
-      return;
-    }
-
-    if (!upstream.ok) {
-      const fallbackPayload = createFallbackPayload(word);
-      cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
-      res.setHeader("X-Fallback", `upstream-${upstream.status}`);
-      sendJson(res, 200, fallbackPayload);
-      return;
-    }
-
+    const payload = await searchReddit(word);
     cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
     res.setHeader("X-Cache", "MISS");
+    res.setHeader("X-Source", "reddit-oauth");
 
     if (req.method === "HEAD") {
       res.status(204).end();
@@ -118,7 +157,7 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     const fallbackPayload = createFallbackPayload(word);
     cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload: fallbackPayload });
-    res.setHeader("X-Fallback", "fetch-error");
+    res.setHeader("X-Fallback", String(err?.message || err));
     sendJson(res, 200, fallbackPayload);
   }
 };
