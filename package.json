@@ -1,0 +1,8 @@
+{
+  "name": "florida-man",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+

@@ -2,6 +2,7 @@ const input = document.getElementById("wordInput");
 const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
+const VERCEL_API_ORIGIN = "";
 
 input.addEventListener("keydown", async (e) => {
   if (e.key === "Enter") {
@@ -27,13 +28,41 @@ async function fetchHeadline(word) {
   linkEl.textContent = "";
 
   try {
-    const query = encodeURIComponent(`Florida Man ${word}`);
-    const url = `https://www.reddit.com/r/FloridaMan/search.json?q=${query}&restrict_sr=1&sort=relevance&limit=25`;
+    const params = new URLSearchParams({ word });
+    const apiPath = `/api/reddit-search?${params.toString()}`;
+    const sameOriginUrl = apiPath;
+    const vercelProxyUrl = VERCEL_API_ORIGIN
+      ? `${VERCEL_API_ORIGIN.replace(/\/$/, "")}${apiPath}`
+      : "";
+    const apiHost = window.location.hostname || "localhost";
+    const localProxyUrl = `http://${apiHost}:3000/api/reddit-search?${params.toString()}`;
 
-    const res = await fetch(url);
+    const urls = [];
+    const isLocalDevServer = window.location.port === "3000";
+    const isLiveServer = window.location.port === "5500";
+    const isGithubPages = window.location.hostname.endsWith("github.io");
+
+    if (vercelProxyUrl && isGithubPages) urls.push(vercelProxyUrl);
+    if (!isLiveServer) urls.push(sameOriginUrl);
+    if (isLocalDevServer || isLiveServer) urls.push(localProxyUrl);
+    if (vercelProxyUrl && !urls.includes(vercelProxyUrl)) urls.push(vercelProxyUrl);
+
+    let res = null;
+    let lastError = null;
+    for (const url of urls) {
+      try {
+        res = await fetch(url);
+        if (res.ok) break;
+        lastError = new Error(`Proxy request failed (${res.status})`);
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    if (!res || !res.ok) throw lastError || new Error("Proxy request failed");
+
     const data = await res.json();
 
-    let posts = data.data.children;
+    let posts = data?.data?.children || [];
 
     // filter titles that actually include the word
     posts = posts.filter(p =>
@@ -43,7 +72,7 @@ async function fetchHeadline(word) {
     // fallback
     if (posts.length === 0) {
       headlineEl.textContent = "Couldn't find that word, but here's a random headline.";
-      posts = data.data.children;
+      posts = data?.data?.children || [];
     }
 
     if (!posts || posts.length === 0) {
@@ -80,6 +109,11 @@ async function fetchHeadline(word) {
 
   } catch (err) {
     console.error(err);
-    headlineEl.textContent = "Florida Man is being chaotic right now.";
+    const msg = String(err?.message || err || "");
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      headlineEl.textContent = "Can’t reach the API server. Run npm start locally, or deploy this project to Vercel.";
+    } else {
+      headlineEl.textContent = "Florida Man is being chaotic right now.";
+    }
   }
 }
