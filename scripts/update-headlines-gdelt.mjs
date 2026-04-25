@@ -8,6 +8,8 @@ const repoRoot = path.resolve(__dirname, "..");
 const outPath = path.join(repoRoot, "data", "headlines.json");
 const targetCount = Number(process.argv[2] || 1000);
 const maxDaysBack = Number(process.argv[3] || 90);
+const rangeStartArg = process.argv[4] || "";
+const rangeEndArg = process.argv[5] || "";
 const windowDays = 3;
 const maxRecords = 250;
 const retryCount = 3;
@@ -30,6 +32,32 @@ function formatGdeltDate(date) {
   const minute = String(date.getUTCMinutes()).padStart(2, "0");
   const second = String(date.getUTCSeconds()).padStart(2, "0");
   return `${year}${month}${day}${hour}${minute}${second}`;
+}
+
+function formatDisplayDate(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function parseDateArg(value, endOfPeriod = false) {
+  if (!value) return null;
+
+  const yearOnly = value.match(/^\d{4}$/);
+  if (yearOnly) {
+    const year = Number(value);
+    return endOfPeriod
+      ? new Date(Date.UTC(year, 11, 31, 23, 59, 59))
+      : new Date(Date.UTC(year, 0, 1, 0, 0, 0));
+  }
+
+  const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly.map(Number);
+    return endOfPeriod
+      ? new Date(Date.UTC(year, month - 1, day, 23, 59, 59))
+      : new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  }
+
+  throw new Error(`Invalid date "${value}". Use YYYY or YYYY-MM-DD.`);
 }
 
 function parseGdeltDate(value) {
@@ -160,11 +188,17 @@ async function main() {
   for (const item of items) addSeenKeys(seen, item);
 
   const now = new Date();
-  console.log(`Loaded ${items.length} existing headlines.`);
+  const rangeEnd = parseDateArg(rangeEndArg, true) || now;
+  const rangeStart = parseDateArg(rangeStartArg, false) || new Date(rangeEnd.getTime() - maxDaysBack * 86400_000);
+  if (rangeStart >= rangeEnd) {
+    throw new Error("Start date must be before end date.");
+  }
 
-  for (let offset = 0; offset < maxDaysBack && items.length < targetCount; offset += windowDays) {
-    const endDate = new Date(now.getTime() - offset * 86400_000);
-    const startDate = new Date(now.getTime() - (offset + windowDays) * 86400_000);
+  console.log(`Loaded ${items.length} existing headlines.`);
+  console.log(`Searching ${formatDisplayDate(rangeStart)} through ${formatDisplayDate(rangeEnd)}.`);
+
+  for (let endDate = rangeEnd; endDate > rangeStart && items.length < targetCount;) {
+    const startDate = new Date(Math.max(rangeStart.getTime(), endDate.getTime() - windowDays * 86400_000));
     process.stdout.write(`Fetching ${formatGdeltDate(startDate)}-${formatGdeltDate(endDate)}... `);
 
     try {
@@ -187,6 +221,7 @@ async function main() {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 400));
+    endDate = startDate;
   }
 
   const output = {

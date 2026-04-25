@@ -4,6 +4,8 @@
   "scripts": {
     "start": "node server.js",
     "headlines:update": "node scripts/update-headlines-gdelt.mjs 500 730",
-    "headlines:update:large": "node scripts/update-headlines-gdelt.mjs 1000 1460"
+    "headlines:update:large": "node scripts/update-headlines-gdelt.mjs 1000 1460",
+    "headlines:add:2024": "node scripts/update-headlines-gdelt.mjs 2500 0 2024 2024",
+    "headlines:add:2023": "node scripts/update-headlines-gdelt.mjs 3000 0 2023 2023"
   }
 }
