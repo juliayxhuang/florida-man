@@ -72,6 +72,25 @@ function normalizeArticle(article) {
   };
 }
 
+function addSeenKeys(seen, item) {
+  if (item.url) seen.add(item.url.toLowerCase());
+  if (item.title) seen.add(item.title.toLowerCase());
+}
+
+async function loadExistingItems() {
+  try {
+    const raw = await fs.readFile(outPath, "utf8");
+    const json = JSON.parse(raw);
+    const existingItems = Array.isArray(json) ? json : (json.items || []);
+    return existingItems
+      .filter((item) => item && item.title && item.url)
+      .slice(0, targetCount);
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+}
+
 async function fetchWindow(startDate, endDate) {
   const url = new URL("https://api.gdeltproject.org/api/v2/doc/doc");
   url.searchParams.set("query", query);
@@ -137,8 +156,11 @@ async function fetchJsonWithRetries(url) {
 
 async function main() {
   const seen = new Set();
-  const items = [];
+  const items = await loadExistingItems();
+  for (const item of items) addSeenKeys(seen, item);
+
   const now = new Date();
+  console.log(`Loaded ${items.length} existing headlines.`);
 
   for (let offset = 0; offset < maxDaysBack && items.length < targetCount; offset += windowDays) {
     const endDate = new Date(now.getTime() - offset * 86400_000);
@@ -154,8 +176,7 @@ async function main() {
         const key = item.url.toLowerCase();
         const titleKey = item.title.toLowerCase();
         if (seen.has(key) || seen.has(titleKey)) continue;
-        seen.add(key);
-        seen.add(titleKey);
+        addSeenKeys(seen, item);
         items.push(item);
         added += 1;
         if (items.length >= targetCount) break;
