@@ -7,6 +7,9 @@ const headlinesUrl = new URL("../data/headlines.json", scriptUrl);
 
 let headlineData = null;
 
+// Source link is now rendered inline in #meta.
+if (linkEl) linkEl.remove();
+
 input.addEventListener("keydown", async (e) => {
   if (e.key !== "Enter") return;
 
@@ -57,31 +60,111 @@ function formatDate(dateString) {
   });
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderHeadlineWithQuery(headlineElement, title, query) {
+  headlineElement.replaceChildren();
+
+  if (!title) return;
+  if (!query) {
+    headlineElement.textContent = title;
+    return;
+  }
+
+  const safeQuery = escapeRegExp(query);
+  const re = new RegExp(safeQuery, "gi");
+  let cursor = 0;
+
+  for (const match of title.matchAll(re)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+
+    if (start > cursor) {
+      headlineElement.append(document.createTextNode(title.slice(cursor, start)));
+    }
+
+    const em = document.createElement("em");
+    em.textContent = title.slice(start, end);
+    headlineElement.append(em);
+
+    cursor = end;
+  }
+
+  if (cursor < title.length) {
+    headlineElement.append(document.createTextNode(title.slice(cursor)));
+  }
+}
+
+function renderNoMatchesMessage(headlineElement, query, suggestion, onSuggestion) {
+  headlineElement.replaceChildren();
+  headlineElement.append(
+    document.createTextNode(`Florida man doesn't like "${query}". Try `)
+  );
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "suggestion";
+  button.textContent = suggestion;
+  button.addEventListener("click", onSuggestion);
+  headlineElement.append(button);
+
+  headlineElement.append(document.createTextNode("."));
+}
+
 async function fetchHeadline(word) {
   headlineEl.textContent = "Loading...";
-  metaEl.textContent = "";
-  linkEl.textContent = "";
-  linkEl.removeAttribute("href");
+  metaEl.replaceChildren();
 
   try {
     const headlines = await loadHeadlines();
     const matches = headlines.filter((item) => matchesHeadline(item, word));
 
     if (matches.length === 0) {
-      headlineEl.textContent = `No saved headline found for "${word}". Try arrest, police, car, beach, or Florida.`;
+      const suggestions = ["meth", "police", "crocodile", "arrest", "coke", "neighbor"];
+      const viable = suggestions.filter((s) =>
+        headlines.some((item) => matchesHeadline(item, s))
+      );
+      const pool = viable.length ? viable : suggestions;
+      const suggestion = pool[Math.floor(Math.random() * pool.length)];
+
+      renderNoMatchesMessage(headlineEl, word, suggestion, () => {
+        input.value = suggestion;
+        void fetchHeadline(suggestion);
+      });
       return;
     }
 
     const pick = matches[Math.floor(Math.random() * matches.length)];
     const formattedDate = formatDate(pick.date);
-    const source = (pick.source || "UNKNOWN SOURCE").toUpperCase();
-
-    headlineEl.textContent = pick.title;
-    metaEl.textContent = [formattedDate, source].filter(Boolean).join(" · ");
-
+    let sourceDomain = (pick.source || "").trim();
     if (pick.url) {
-      linkEl.href = pick.url;
-      linkEl.textContent = "READ ARTICLE";
+      try {
+        sourceDomain = new URL(pick.url).hostname.replace(/^www\./i, "");
+      } catch {
+        // ignore invalid URL and fall back to pick.source
+      }
+    }
+
+    const sourceLabel = sourceDomain || "Unknown source";
+
+    renderHeadlineWithQuery(headlineEl, pick.title, word);
+    if (formattedDate) {
+      metaEl.append(document.createTextNode(formattedDate));
+    }
+
+    if (sourceLabel) {
+      if (pick.url) {
+        const a = document.createElement("a");
+        a.href = pick.url;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.textContent = sourceLabel;
+        metaEl.append(a);
+      } else {
+        metaEl.append(document.createTextNode(sourceLabel));
+      }
     }
   } catch (err) {
     console.error(err);
