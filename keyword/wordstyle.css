@@ -1,5 +1,6 @@
 :root {
-  --page-pad: 36px;
+  --page-pad-y: 36px;
+  --page-pad-x: 20px;
   --meta-gap: 24px;
 }
 
@@ -11,7 +12,7 @@
 
 body {
   min-height: 100vh;
-  padding: var(--page-pad);
+  padding: var(--page-pad-y) var(--page-pad-x);
   background: #fff;
   color: #111;
   font-family: "hoefler-text", serif;
@@ -32,7 +33,7 @@ body {
   justify-content: flex-start;
   width: 100%;
   max-width: 640px;
-  min-height: calc(100vh - (var(--page-pad) * 2));
+  min-height: calc(100vh - (var(--page-pad-y) * 2));
   gap: 0;
 }
 
@@ -120,7 +121,8 @@ h1 .suggestion:focus-visible {
 /* TABLET */
 @media (min-width: 768px) {
   :root {
-    --page-pad: 64px;
+    --page-pad-y: 64px;
+    --page-pad-x: 64px;
     --meta-gap: 32px;
   }
 
