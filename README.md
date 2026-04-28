@@ -26,6 +26,8 @@ VS Code Live Server also works because the search page now loads `data/headlines
 
 ## Update Headlines
 
+For detailed instructions on expanding the saved headline database, see `HEADLINE_MAINTENANCE.md`.
+
 Refresh the real-source headline dataset from GDELT:
 
 ```bash
