@@ -44,14 +44,14 @@ async function loadHeadlines() {
 }
 
 function matchesHeadline(item, word) {
-  const needle = word.toLowerCase();
-  const haystack = [
-    item.title,
-    item.source,
-    ...(Array.isArray(item.keywords) ? item.keywords : [])
-  ].join(" ").toLowerCase();
+  const needle = word.trim().toLowerCase();
+  if (!needle) return false;
 
-  return haystack.includes(needle);
+  const title = (item.title || "").toLowerCase();
+  if (!title) return false;
+
+  const tokens = title.match(/[\p{L}\p{N}]+/gu) || [];
+  return tokens.includes(needle);
 }
 
 function formatDate(dateString) {
@@ -71,6 +71,11 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function isLetterOrNumber(char) {
+  if (!char) return false;
+  return /[\p{L}\p{N}]/u.test(char);
+}
+
 function renderHeadlineWithQuery(headlineElement, title, query) {
   headlineElement.replaceChildren();
 
@@ -80,13 +85,24 @@ function renderHeadlineWithQuery(headlineElement, title, query) {
     return;
   }
 
-  const safeQuery = escapeRegExp(query);
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) {
+    headlineElement.textContent = title;
+    return;
+  }
+
+  const safeQuery = escapeRegExp(normalizedQuery);
   const re = new RegExp(safeQuery, "gi");
   let cursor = 0;
+  let renderedAny = false;
 
   for (const match of title.matchAll(re)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
+
+    const before = title[start - 1] || "";
+    const after = title[end] || "";
+    if (isLetterOrNumber(before) || isLetterOrNumber(after)) continue;
 
     if (start > cursor) {
       headlineElement.append(document.createTextNode(title.slice(cursor, start)));
@@ -97,11 +113,15 @@ function renderHeadlineWithQuery(headlineElement, title, query) {
     headlineElement.append(em);
 
     cursor = end;
+    renderedAny = true;
   }
 
-  if (cursor < title.length) {
-    headlineElement.append(document.createTextNode(title.slice(cursor)));
+  if (!renderedAny) {
+    headlineElement.textContent = title;
+    return;
   }
+
+  if (cursor < title.length) headlineElement.append(document.createTextNode(title.slice(cursor)));
 }
 
 function renderNoMatchesMessage(headlineElement, query, suggestion, onSuggestion) {
