@@ -48,7 +48,7 @@ input {
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: 20pt;
+  font-size: 28pt;
   color: rgba(17, 17, 17, 0.65);
   text-align: left;
   line-height: 1.1;
@@ -78,7 +78,7 @@ input:focus::placeholder {
 
 h1 {
   font: inherit;
-  font-size: 20pt;
+  font-size: 28pt;
   line-height: 1.1;
   letter-spacing: -0.01em;
 }
@@ -103,7 +103,7 @@ h1 .suggestion:focus-visible {
 #meta {
   margin-top: 1rem;
   font: inherit;
-  font-size: 10pt;
+  font-size: 12pt;
   line-height: 1.1;
   letter-spacing: 0.02em;
   color: #111;
