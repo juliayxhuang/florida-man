@@ -2,7 +2,6 @@ const input = document.getElementById("wordInput");
 const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
-const searchBtn = document.getElementById("searchBtn");
 const scriptUrl = new URL(document.currentScript.src);
 const headlinesUrl = new URL("../data/headlines.json", scriptUrl);
 
@@ -32,12 +31,6 @@ input.addEventListener("keydown", async (e) => {
 
   submitSearch();
 });
-
-if (searchBtn) {
-  searchBtn.addEventListener("click", () => {
-    submitSearch();
-  });
-}
 
 async function loadHeadlines() {
   if (headlineData) return headlineData;
