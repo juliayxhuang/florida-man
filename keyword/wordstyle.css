@@ -12,7 +12,7 @@
 
 body {
   min-height: 100vh;
-  padding: var(--page-pad-y) var(--page-pad-x);
+  padding: 0 var(--page-pad-x) var(--page-pad-y);
   background: #fff;
   color: #111;
   font-family: "hoefler-text", serif;
@@ -37,7 +37,7 @@ body {
   width: 100%;
   flex: 1 1 auto;
   max-width: 640px;
-  min-height: calc(100vh - (var(--page-pad-y) * 2));
+  min-height: calc(100vh - var(--page-pad-y));
   gap: 0;
 }
 
@@ -161,7 +161,7 @@ h1 .suggestion:focus-visible {
 @media (min-width: 768px) {
   :root {
     --page-pad-y: 64px;
-    --page-pad-x: 64px;
+    --page-pad-x: 32px;
     --meta-gap: 32px;
   }
 
