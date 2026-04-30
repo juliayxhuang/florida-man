@@ -12,12 +12,15 @@
   <div class="container">
 
     <!-- INPUT -->
-    <input 
-      type="text" 
-      id="wordInput" 
-      placeholder="Your word..." 
-      maxlength="20"
-    />
+    <div class="top-row">
+      <input 
+        type="text" 
+        id="wordInput" 
+        placeholder="Your word..." 
+        maxlength="20"
+      />
+      <button type="button" id="aboutBtn" class="about-btn">About</button>
+    </div>
 
     <!-- HEADLINE -->
     <div class="headline-section">
@@ -29,6 +32,18 @@
       <a id="link" href="#" target="_blank"></a>
     </div>
 
+  </div>
+
+  <div id="aboutOverlay" class="about-overlay" aria-hidden="true">
+    <button type="button" id="aboutCloseBtn" class="about-close">Close</button>
+    <div class="about-content">
+      <p>
+        This website uses a JSON with over 10,000 “Florida man” articles to search for a headline that matches your key word.
+      </p>
+      <p>
+        Press enter or return (on your phone) to search for your very own Florida man!
+      </p>
+    </div>
   </div>
 
   <script src="wordscript.js"></script>

@@ -2,6 +2,9 @@ const input = document.getElementById("wordInput");
 const headlineEl = document.getElementById("headline");
 const metaEl = document.getElementById("meta");
 const linkEl = document.getElementById("link");
+const aboutBtn = document.getElementById("aboutBtn");
+const aboutOverlay = document.getElementById("aboutOverlay");
+const aboutCloseBtn = document.getElementById("aboutCloseBtn");
 const scriptUrl = new URL(document.currentScript.src);
 const headlinesUrl = new URL("../data/headlines.json", scriptUrl);
 
@@ -14,7 +17,33 @@ let activeWord = "";
 let activeMatches = [];
 let activeIndex = -1;
 
+function setAboutOpen(isOpen) {
+  if (!aboutOverlay) return;
+  aboutOverlay.classList.toggle("is-open", isOpen);
+  aboutOverlay.setAttribute("aria-hidden", String(!isOpen));
+  if (isOpen) {
+    aboutCloseBtn?.focus?.();
+  } else {
+    aboutBtn?.focus?.();
+  }
+}
+
+aboutBtn?.addEventListener("click", () => {
+  setAboutOpen(true);
+});
+
+aboutCloseBtn?.addEventListener("click", () => {
+  setAboutOpen(false);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (aboutOverlay?.classList.contains("is-open")) setAboutOpen(false);
+});
+
 function submitSearch() {
+  if (aboutOverlay?.classList.contains("is-open")) setAboutOpen(false);
+
   const value = input.value.trim();
   if (value.split(/\s+/).length > 1) {
     headlineEl.textContent = "Too many words.";
@@ -140,7 +169,7 @@ function renderNoMatchesMessage(headlineElement, query, suggestion, onSuggestion
   headlineElement.append(document.createTextNode("."));
 }
 
-function renderMeta(metaElement, formattedDate, sourceLabel, url, canShuffle, onShuffle) {
+function renderMeta(metaElement, formattedDate, sourceLabel, url, index, total, onPrev, onNext) {
   metaElement.replaceChildren();
 
   const left = document.createElement("span");
@@ -171,14 +200,33 @@ function renderMeta(metaElement, formattedDate, sourceLabel, url, canShuffle, on
 
   metaElement.append(left);
 
-  const shuffle = document.createElement("button");
-  shuffle.type = "button";
-  shuffle.className = "shuffle";
-  shuffle.textContent = "→";
-  shuffle.disabled = !canShuffle;
-  shuffle.setAttribute("aria-label", "Shuffle headline");
-  shuffle.addEventListener("click", onShuffle);
-  metaElement.append(shuffle);
+  const nav = document.createElement("span");
+  nav.className = "meta-nav";
+
+  const prev = document.createElement("button");
+  prev.type = "button";
+  prev.className = "nav-btn";
+  prev.textContent = "<";
+  prev.disabled = total <= 1;
+  prev.setAttribute("aria-label", "Previous headline");
+  prev.addEventListener("click", onPrev);
+  nav.append(prev);
+
+  const count = document.createElement("span");
+  count.className = "nav-count";
+  count.textContent = `${index} of ${total}`;
+  nav.append(count);
+
+  const next = document.createElement("button");
+  next.type = "button";
+  next.className = "nav-btn";
+  next.textContent = ">";
+  next.disabled = total <= 1;
+  next.setAttribute("aria-label", "Next headline");
+  next.addEventListener("click", onNext);
+  nav.append(next);
+
+  metaElement.append(nav);
 }
 
 function showActivePick() {
@@ -198,11 +246,24 @@ function showActivePick() {
 
   const sourceLabel = sourceDomain || "Unknown source";
   renderHeadlineWithQuery(headlineEl, pick.title, activeWord);
-  renderMeta(metaEl, formattedDate, sourceLabel, pick.url || "", activeMatches.length > 1, () => {
-    if (activeMatches.length <= 1) return;
-    activeIndex = (activeIndex + 1) % activeMatches.length;
-    showActivePick();
-  });
+  renderMeta(
+    metaEl,
+    formattedDate,
+    sourceLabel,
+    pick.url || "",
+    activeIndex + 1,
+    activeMatches.length,
+    () => {
+      if (activeMatches.length <= 1) return;
+      activeIndex = (activeIndex - 1 + activeMatches.length) % activeMatches.length;
+      showActivePick();
+    },
+    () => {
+      if (activeMatches.length <= 1) return;
+      activeIndex = (activeIndex + 1) % activeMatches.length;
+      showActivePick();
+    }
+  );
 }
 
 async function fetchHeadline(word) {
