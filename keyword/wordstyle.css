@@ -1,8 +1,10 @@
 :root {
+  --page-pad-top: 8px;
   --page-pad-y: 36px;
   --page-pad-left: 16px;
   --page-pad-right: 16px;
   --edge-right: 32px;
+  --about-nudge-y: 16px;
   --meta-gap: 24px;
   --content-max: 640px;
   --big-size: 28pt;
@@ -23,7 +25,7 @@ html, body {
 
 body {
   min-height: 100vh;
-  padding: 0 var(--page-pad-right) var(--page-pad-y) var(--page-pad-left);
+  padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-y) var(--page-pad-left);
   background: #fff;
   color: #111;
   font-family: "hoefler-text", serif;
@@ -48,7 +50,7 @@ body {
   width: 100%;
   flex: 1 1 auto;
   max-width: var(--content-max);
-  min-height: calc(100vh - var(--page-pad-y));
+  min-height: calc(100vh - (var(--page-pad-top) + var(--page-pad-y)));
   gap: 0;
 }
 
@@ -88,7 +90,7 @@ input:focus::placeholder {
 
 .about-btn {
   position: fixed;
-  top: 0;
+  top: var(--page-pad-top);
   right: var(--edge-right);
   z-index: 5;
   background: transparent;
@@ -98,8 +100,10 @@ input:focus::placeholder {
   font-size: var(--big-size);
   line-height: 1.1;
   color: var(--muted-ink);
+  opacity: 0.5;
   cursor: pointer;
   flex: 0 0 auto;
+  transform: translateY(var(--about-nudge-y));
 }
 
 .about-btn:focus-visible {
@@ -175,13 +179,14 @@ h1 .suggestion:focus-visible {
 
 .meta-nav {
   display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
 .nav-btn {
   display: inline-flex;
+  align-items: center;
   background: transparent;
   border: 0;
   padding: 0;
@@ -192,11 +197,17 @@ h1 .suggestion:focus-visible {
   color: inherit;
   cursor: pointer;
   line-height: 1.1;
-  align-self: baseline;
+  align-self: center;
+}
+
+.nav-btn .nav-icon {
+  width: 1em;
+  height: 1em;
+  display: block;
+  transform: translateY(0.08em);
 }
 
 .nav-btn:disabled {
-  opacity: 0.25;
   cursor: default;
 }
 
@@ -207,6 +218,20 @@ h1 .suggestion:focus-visible {
 
 .nav-count {
   white-space: nowrap;
+}
+
+.nav-sep::before {
+  content: " / ";
+}
+
+@media (min-width: 768px) {
+  .meta-nav {
+    gap: 10px;
+  }
+
+  .nav-sep::before {
+    content: " of ";
+  }
 }
 
 /* ABOUT OVERLAY */
@@ -225,7 +250,7 @@ h1 .suggestion:focus-visible {
 
 .about-close {
   position: absolute;
-  top: 0;
+  top: var(--page-pad-top);
   right: var(--edge-right);
   background: transparent;
   border: 0;
@@ -235,6 +260,7 @@ h1 .suggestion:focus-visible {
   line-height: 1.1;
   color: var(--muted-ink);
   cursor: pointer;
+  transform: translateY(var(--about-nudge-y));
 }
 
 .about-close:focus-visible {
@@ -261,6 +287,7 @@ h1 .suggestion:focus-visible {
 /* TABLET */
 @media (min-width: 768px) {
   :root {
+    --page-pad-top: 32px;
     --page-pad-y: 64px;
     --page-pad-left: 32px;
     --page-pad-right: 32px;
