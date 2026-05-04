@@ -7,8 +7,6 @@ const aboutOverlay = document.getElementById("aboutOverlay");
 const aboutCloseBtn = document.getElementById("aboutCloseBtn");
 const scriptUrl = new URL(document.currentScript.src);
 const headlinesUrl = new URL("../data/headlines.json", scriptUrl);
-const arrowLeftUrl = new URL("../arrow-left.svg", scriptUrl);
-const arrowRightUrl = new URL("../arrow-right.svg", scriptUrl);
 
 let headlineData = null;
 
@@ -208,12 +206,7 @@ function renderMeta(metaElement, formattedDate, sourceLabel, url, index, total, 
   const prev = document.createElement("button");
   prev.type = "button";
   prev.className = "nav-btn";
-  const prevIcon = document.createElement("img");
-  prevIcon.className = "nav-icon";
-  prevIcon.src = arrowLeftUrl.href;
-  prevIcon.alt = "";
-  prevIcon.setAttribute("aria-hidden", "true");
-  prev.append(prevIcon);
+  prev.textContent = "<";
   prev.disabled = total <= 1;
   prev.setAttribute("aria-label", "Previous headline");
   prev.addEventListener("click", onPrev);
@@ -240,12 +233,7 @@ function renderMeta(metaElement, formattedDate, sourceLabel, url, index, total, 
   const next = document.createElement("button");
   next.type = "button";
   next.className = "nav-btn";
-  const nextIcon = document.createElement("img");
-  nextIcon.className = "nav-icon";
-  nextIcon.src = arrowRightUrl.href;
-  nextIcon.alt = "";
-  nextIcon.setAttribute("aria-hidden", "true");
-  next.append(nextIcon);
+  next.textContent = ">";
   next.disabled = total <= 1;
   next.setAttribute("aria-label", "Next headline");
   next.addEventListener("click", onNext);

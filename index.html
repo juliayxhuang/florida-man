@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <meta property="og:title" content="Find Your Florida Man!"/>
-  <meta property="og:image" content="https://raw.githubusercontent.com/madhumitau19/Soundscape/main/Preview-Soundscapes.png"/>
+  <meta property="og:image" content="https://raw.githubusercontent.com/juliayxhuang/florida-man/main/alligator-floridaman.png"/>
   <meta property="og:description" content="Find your Florida man by keyword search!"/>
   <meta property="og:type" content="website"/>
   <meta property="og:url" content="https://juliayxhuang.github.io/florida-man/"/>
@@ -13,7 +13,8 @@
 
   <title>Find Your Florida Man!</title>
 
-  <link rel="icon" type="image/svg+xml" href="arrow-right.svg">
+  <link rel="icon" href="arrow-right.svg" type="image/svg+xml" sizes="any">
+  <link rel="icon" href="crocodile.png" type="image/png">
   <link rel="stylesheet" href="keyword/wordstyle.css">
 
   <script>
@@ -38,7 +39,9 @@
         placeholder="Your word..."
         maxlength="20"
       />
-      <button type="button" id="aboutBtn" class="about-btn">About</button>
+      <button type="button" id="aboutBtn" class="about-btn" aria-label="About">
+        <img src="arrow-left.svg" alt="">
+      </button>
     </div>
 
     <div class="headline-section">
@@ -53,7 +56,9 @@
   </div>
 
   <div id="aboutOverlay" class="about-overlay" aria-hidden="true">
-    <button type="button" id="aboutCloseBtn" class="about-close">Close</button>
+    <button type="button" id="aboutCloseBtn" class="about-close" aria-label="Close">
+      <img src="x.svg" alt="">
+    </button>
     <div class="about-content">
       <p>
         This website uses a JSON with over 10,000 “Florida man” articles to search for a headline that matches your key word.

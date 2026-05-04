@@ -1,10 +1,11 @@
 :root {
-  --page-pad-top: 8px;
+  --page-pad-top: 0px;
   --page-pad-y: 36px;
   --page-pad-left: 16px;
   --page-pad-right: 16px;
-  --edge-right: 32px;
-  --about-nudge-y: 16px;
+  --edge-right: 8px;
+  --close-right: 24px;
+  --about-nudge-y: 8px;
   --meta-gap: 24px;
   --content-max: 640px;
   --big-size: 28pt;
@@ -98,12 +99,19 @@ input:focus::placeholder {
   padding: 0;
   font: inherit;
   font-size: var(--big-size);
-  line-height: 1.1;
+  line-height: 1;
   color: var(--muted-ink);
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: pointer;
   flex: 0 0 auto;
   transform: translateY(var(--about-nudge-y));
+}
+
+.about-btn img {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  vertical-align: baseline;
 }
 
 .about-btn:focus-visible {
@@ -200,13 +208,6 @@ h1 .suggestion:focus-visible {
   align-self: center;
 }
 
-.nav-btn .nav-icon {
-  width: 1em;
-  height: 1em;
-  display: block;
-  transform: translateY(0.08em);
-}
-
 .nav-btn:disabled {
   cursor: default;
 }
@@ -251,7 +252,7 @@ h1 .suggestion:focus-visible {
 .about-close {
   position: absolute;
   top: var(--page-pad-top);
-  right: var(--edge-right);
+  right: var(--close-right);
   background: transparent;
   border: 0;
   padding: 0;
@@ -261,6 +262,13 @@ h1 .suggestion:focus-visible {
   color: var(--muted-ink);
   cursor: pointer;
   transform: translateY(var(--about-nudge-y));
+  opacity: 0.4;
+}
+
+.about-close img {
+  display: block;
+  width: 1.4em;
+  height: 1.4em;
 }
 
 .about-close:focus-visible {
@@ -287,7 +295,6 @@ h1 .suggestion:focus-visible {
 /* TABLET */
 @media (min-width: 768px) {
   :root {
-    --page-pad-top: 32px;
     --page-pad-y: 64px;
     --page-pad-left: 32px;
     --page-pad-right: 32px;
@@ -318,6 +325,7 @@ h1 .suggestion:focus-visible {
     --content-max: 980px;
     --big-size: 48pt;
     --small-size: 20pt;
+    --page-pad-top: 16px;
   }
 
   .container {
