@@ -137,9 +137,10 @@ function renderHeadlineWithQuery(headlineElement, title, query) {
       headlineElement.append(document.createTextNode(title.slice(cursor, start)));
     }
 
-    const em = document.createElement("em");
-    em.textContent = title.slice(start, end);
-    headlineElement.append(em);
+    const matchEl = document.createElement("span");
+    matchEl.className = "match";
+    matchEl.textContent = title.slice(start, end);
+    headlineElement.append(matchEl);
 
     cursor = end;
     renderedAny = true;
