@@ -277,6 +277,24 @@ h1 .suggestion:focus-visible {
 .nav-btn,
 h1 .suggestion {
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.about-btn:focus,
+.about-close:focus,
+.nav-btn:focus,
+h1 .suggestion:focus {
+  outline: none;
+}
+
+.about-btn,
+.about-close,
+.nav-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
 }
 
 .about-content {
