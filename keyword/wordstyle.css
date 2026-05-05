@@ -115,8 +115,7 @@ input:focus::placeholder {
 }
 
 .about-btn:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+  outline: none;
 }
 
 /* HEADLINE */
@@ -149,8 +148,7 @@ h1 .suggestion {
 }
 
 h1 .suggestion:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+  outline: none;
 }
 
 /* META */
@@ -213,8 +211,7 @@ h1 .suggestion:focus-visible {
 }
 
 .nav-btn:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+  outline: none;
 }
 
 .nav-count {
@@ -272,8 +269,14 @@ h1 .suggestion:focus-visible {
 }
 
 .about-close:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+  outline: none;
+}
+
+.about-btn,
+.about-close,
+.nav-btn,
+h1 .suggestion {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .about-content {
