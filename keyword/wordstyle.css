@@ -61,9 +61,9 @@ body {
 .top-row {
   width: 100%;
   display: flex;
-  position: relative;
-  align-items: flex-start;
-  justify-content: flex-start;
+  position: static;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -81,8 +81,8 @@ input {
   appearance: none;
   flex: 1 1 auto;
   min-width: 0;
-  padding-right: 2.2em;
-  transform: translateY(-6px);
+  padding-right: 0;
+  transform: none;
 }
 
 input::placeholder {
@@ -95,19 +95,21 @@ input:focus::placeholder {
 }
 
 .about-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: fixed;
+  top: var(--page-pad-top);
+  right: var(--page-pad-right);
+  z-index: 20;
   background: transparent;
   border: 0;
   padding: 0;
   font: inherit;
   font-size: var(--big-size);
-  line-height: 1;
+  line-height: 0;
   color: var(--muted-ink);
   opacity: 0.3;
   cursor: pointer;
   flex: 0 0 auto;
+  transform: translateY(-6px);
 }
 
 .about-btn img {
@@ -238,7 +240,7 @@ h1 .suggestion:focus-visible {
   position: fixed;
   inset: 0;
   background: #fff;
-  z-index: 10;
+  z-index: 1000;
   display: none;
   padding-left: var(--page-pad-left);
   padding-right: var(--page-pad-right);
@@ -264,6 +266,7 @@ h1 .suggestion:focus-visible {
   color: var(--muted-ink);
   cursor: pointer;
   opacity: 0.3;
+  transform: translateY(-6px);
 }
 
 .about-close img {

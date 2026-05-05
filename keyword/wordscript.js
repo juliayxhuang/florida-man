@@ -21,6 +21,7 @@ function setAboutOpen(isOpen) {
   if (!aboutOverlay) return;
   aboutOverlay.classList.toggle("is-open", isOpen);
   aboutOverlay.setAttribute("aria-hidden", String(!isOpen));
+  if (aboutBtn) aboutBtn.style.visibility = isOpen ? "hidden" : "";
   if (isOpen) {
     aboutCloseBtn?.focus?.();
   } else {
