@@ -3,7 +3,7 @@
   --page-pad-y: 36px;
   --page-pad-left: 16px;
   --page-pad-right: 16px;
-  --overlay-top-min: 0px;
+  --overlay-top-min: 20px;
   --close-pad-right: 24px;
   --close-right: 24px;
   --about-nudge-y: 8px;
@@ -61,7 +61,7 @@ body {
 .top-row {
   width: 100%;
   display: flex;
-  align-items: flex-end;
+  align-items: baseline;
   justify-content: space-between;
   gap: 16px;
 }
@@ -97,7 +97,7 @@ input:focus::placeholder {
   padding: 0;
   font: inherit;
   font-size: var(--big-size);
-  line-height: 0;
+  line-height: 1.1;
   color: var(--muted-ink);
   opacity: 0.3;
   cursor: pointer;
@@ -105,9 +105,10 @@ input:focus::placeholder {
 }
 
 .about-btn img {
-  display: block;
+  display: inline-block;
   width: 1.4em;
   height: 1.4em;
+  vertical-align: baseline;
 }
 
 .about-btn:focus-visible {
