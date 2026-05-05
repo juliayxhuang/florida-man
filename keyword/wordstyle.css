@@ -3,7 +3,8 @@
   --page-pad-y: 36px;
   --page-pad-left: 16px;
   --page-pad-right: 16px;
-  --edge-right: 8px;
+  --overlay-top-min: 20px;
+  --close-pad-right: 24px;
   --close-right: 24px;
   --about-nudge-y: 8px;
   --meta-gap: 24px;
@@ -51,7 +52,7 @@ body {
   justify-content: flex-start;
   width: 100%;
   flex: 1 1 auto;
-  max-width: var(--content-max);
+  max-width: none;
   min-height: calc(100vh - (var(--page-pad-top) + var(--page-pad-y)));
   gap: 0;
 }
@@ -60,8 +61,8 @@ body {
 .top-row {
   width: 100%;
   display: flex;
-  align-items: baseline;
-  justify-content: flex-start;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -91,28 +92,22 @@ input:focus::placeholder {
 }
 
 .about-btn {
-  position: fixed;
-  top: var(--page-pad-top);
-  right: var(--edge-right);
-  z-index: 5;
   background: transparent;
   border: 0;
   padding: 0;
   font: inherit;
   font-size: var(--big-size);
-  line-height: 1;
+  line-height: 0;
   color: var(--muted-ink);
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: pointer;
   flex: 0 0 auto;
-  transform: translateY(var(--about-nudge-y));
 }
 
 .about-btn img {
-  display: inline-block;
+  display: block;
   width: 1.4em;
   height: 1.4em;
-  vertical-align: baseline;
 }
 
 .about-btn:focus-visible {
@@ -122,12 +117,11 @@ input:focus::placeholder {
 /* HEADLINE */
 .headline-section {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: var(--page-pad-left);
   top: 50%;
   transform: translateY(-50%);
   text-align: left;
-  width: 100%;
+  width: min(calc(100vw - var(--page-pad-left) - var(--page-pad-right)), var(--content-max));
 }
 
 h1 {
@@ -240,17 +234,21 @@ h1 .suggestion:focus-visible {
   background: #fff;
   z-index: 10;
   display: none;
-  padding: 0;
+  padding-left: var(--page-pad-left);
+  padding-right: var(--page-pad-right);
+  padding-bottom: var(--page-pad-y);
+  padding-top: max(var(--overlay-top-min), calc(var(--page-pad-top) + env(safe-area-inset-top)));
+  flex-direction: column;
 }
 
 .about-overlay.is-open {
-  display: block;
+  display: flex;
 }
 
 .about-close {
-  position: absolute;
-  top: var(--page-pad-top);
-  right: var(--close-right);
+  position: static;
+  align-self: flex-end;
+  margin-right: var(--close-pad-right);
   background: transparent;
   border: 0;
   padding: 0;
@@ -259,8 +257,7 @@ h1 .suggestion:focus-visible {
   line-height: 1.1;
   color: var(--muted-ink);
   cursor: pointer;
-  transform: translateY(var(--about-nudge-y));
-  opacity: 0.4;
+  opacity: 0.3;
 }
 
 .about-close img {
@@ -299,12 +296,12 @@ h1 .suggestion:focus {
 }
 
 .about-content {
-  position: absolute;
-  left: var(--page-pad-left);
-  right: var(--page-pad-left);
-  top: 50%;
-  transform: translateY(-50%);
-  width: auto;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   max-width: var(--content-max);
   font-size: var(--big-size);
   line-height: 1.1;
@@ -326,10 +323,6 @@ h1 .suggestion:focus {
     --small-size: 18pt;
   }
 
-  .container {
-    max-width: var(--content-max);
-  }
-
   input,
   h1 {
     font-size: var(--big-size);
@@ -343,7 +336,9 @@ h1 .suggestion:focus {
 
 @media (max-width: 767px) {
   :root {
-    --about-nudge-y: 64px;
+    --about-nudge-y: 8px;
+    --close-pad-right: 12px;
+    --overlay-top-min: 16px;
   }
 }
 
@@ -354,10 +349,9 @@ h1 .suggestion:focus {
     --big-size: 48pt;
     --small-size: 20pt;
     --page-pad-top: 16px;
-  }
-
-  .container {
-    max-width: var(--content-max);
+    --page-pad-right: 16px;
+    --close-pad-right: 20px;
+    --close-right: 24px;
   }
 
   input,
@@ -375,10 +369,6 @@ h1 .suggestion:focus {
 @media (min-width: 1440px) {
   :root {
     --content-max: 1200px;
-  }
-
-  .container {
-    max-width: var(--content-max);
   }
 
   input,
