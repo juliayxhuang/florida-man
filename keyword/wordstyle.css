@@ -82,6 +82,7 @@ input {
   flex: 1 1 auto;
   min-width: 0;
   padding-right: 2.2em;
+  transform: translateY(-6px);
 }
 
 input::placeholder {
