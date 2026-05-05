@@ -125,11 +125,11 @@ input:focus::placeholder {
 /* HEADLINE */
 .headline-section {
   position: absolute;
-  left: var(--page-pad-left);
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   text-align: left;
-  width: min(calc(100vw - var(--page-pad-left) - var(--page-pad-right)), var(--content-max));
+  width: min(100%, var(--content-max));
 }
 
 h1 {
