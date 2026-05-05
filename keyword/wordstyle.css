@@ -102,7 +102,7 @@ input:focus::placeholder {
   font-size: var(--big-size);
   line-height: 1;
   color: var(--muted-ink);
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: pointer;
   flex: 0 0 auto;
   transform: translateY(var(--about-nudge-y));
@@ -338,6 +338,12 @@ h1 .suggestion:focus {
   #meta,
   #link {
     font-size: var(--small-size);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --about-nudge-y: 18px;
   }
 }
 
