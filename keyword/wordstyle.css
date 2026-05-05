@@ -27,6 +27,7 @@ html, body {
 body {
   min-height: 100vh;
   padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-y) var(--page-pad-left);
+  padding-top: max(0px, calc(var(--page-pad-top) + env(safe-area-inset-top) - 12px));
   background: #fff;
   color: #111;
   font-family: "hoefler-text", serif;
