@@ -343,7 +343,7 @@ h1 .suggestion:focus {
 
 @media (max-width: 767px) {
   :root {
-    --about-nudge-y: 18px;
+    --about-nudge-y: 64px;
   }
 }
 
